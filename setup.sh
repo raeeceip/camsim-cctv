@@ -28,13 +28,14 @@ generate_certificates() {
             -nodes \
             -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
     else
-        # For Git Bash on Windows
+        # For Git Bash/Windows
         MSYS_NO_PATHCONV=1 openssl req -x509 -newkey rsa:4096 \
             -keyout certs/key.pem \
             -out certs/cert.pem \
             -days 365 \
             -nodes \
-            -subj "//C=US\ST=State\L=City\O=Organization\CN=localhost"
+            -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost" \
+            -addext "subjectAltName=DNS:localhost"
     fi
 }
 
@@ -157,8 +158,26 @@ storage:
 EOF
 }
 
+# Function to check FFmpeg installation
+check_ffmpeg() {
+    if ! command -v ffmpeg &> /dev/null; then
+        echo "FFmpeg is not installed. Please install FFmpeg first."
+        echo "Windows: Download from https://www.ffmpeg.org/download.html"
+        echo "WSL/Linux: sudo apt-get install ffmpeg"
+        exit 1
+    fi
+
+    # Test FFmpeg functionality
+    if ! ffmpeg -version &> /dev/null; then
+        echo "FFmpeg is installed but not working properly."
+        exit 1
+    fi
+}
+
 # Main setup process
 main() {
+    # Check FFmpeg first
+    check_ffmpeg
     # Create necessary directories
     mkdir -p bin frames
 
@@ -173,9 +192,6 @@ main() {
     check_command go || install_dependencies
     check_command ffmpeg || install_dependencies
 
-    echo "Setting up Makefile..."
-    setup_makefile
-
     echo "Enhancing security..."
     enhance_security
 
@@ -187,23 +203,25 @@ main() {
     SERVER_PID=$!
 
     echo "Waiting for server to start..."
-    sleep 5
+    sleep 3
 
     echo "Running camera simulator..."
     make run-sim &
     SIM_PID=$!
 
-    echo "Recording for 2 minutes..."
-    sleep 120
+    # Monitor both processes
+    echo "Recording frames..."
+    TIMEOUT=30  # 30 seconds of recording
+    START_TIME=$SECONDS
+    
+    while [ $(( SECONDS - START_TIME )) -lt $TIMEOUT ]; do
+        if ! kill -0 $SERVER_PID 2>/dev/null || ! kill -0 $SIM_PID 2>/dev/null; then
+            echo "One of the processes died unexpectedly"
+            break
+        fi
+        sleep 1
+    done
 
-    echo "Stopping processes..."
-    kill $SIM_PID 2>/dev/null || true
-    kill $SERVER_PID 2>/dev/null || true
-
-    echo "Consolidating frames into video..."
-    consolidate_frames
-
-    echo "Setup complete! You can find the output video at output.mp4"
 }
 
 # Run main function
