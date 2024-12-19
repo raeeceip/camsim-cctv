@@ -121,7 +121,7 @@ func (cm *CameraManager) setupSignalHandler() http.Handler {
 			return
 		}
 
-		go cm.handleCameraConnection(r.Context(), conn)
+		go cm.handleCameraConnection(conn)
 	})
 
 	return mux
@@ -132,13 +132,13 @@ func (cm *CameraManager) setupStreamHandler() http.Handler {
 
 	mux.HandleFunc("/stream/", func(w http.ResponseWriter, r *http.Request) {
 		cameraID := r.URL.Path[len("/stream/"):]
-		cm.handleStreamRequest(w, r, cameraID)
+		cm.handleStreamRequest(w, cameraID)
 	})
 
 	return mux
 }
 
-func (cm *CameraManager) handleCameraConnection(ctx context.Context, conn *websocket.Conn) {
+func (cm *CameraManager) handleCameraConnection(conn *websocket.Conn) {
 	defer conn.Close()
 
 	for {
@@ -168,7 +168,7 @@ func (cm *CameraManager) handleCameraConnection(ctx context.Context, conn *webso
 	}
 }
 
-func (cm *CameraManager) handleStreamRequest(w http.ResponseWriter, r *http.Request, cameraID string) {
+func (cm *CameraManager) handleStreamRequest(w http.ResponseWriter, cameraID string) {
 	// Set up streaming response headers
 	w.Header().Set("Content-Type", "multipart/x-mixed-replace; boundary=frame")
 	w.Header().Set("Cache-Control", "no-cache")

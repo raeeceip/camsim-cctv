@@ -2,223 +2,173 @@
 package main
 
 import (
-	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
 	"flag"
 	"fmt"
-	"image"
-	"image/color"
-	"image/draw"
-	"image/jpeg"
 	"log"
-	"math"
+	"os"
+	"os/exec"
 	"time"
 
 	"github.com/gorilla/websocket"
 )
 
-type CameraSimulator struct {
+type VideoSimulator struct {
 	id         string
 	signalAddr string
 	conn       *websocket.Conn
 	width      int
 	height     int
 	frameCount uint64
-	startTime  time.Time
+	ffmpeg     *exec.Cmd
+	tlsConfig  *tls.Config
 }
 
-type FrameStats struct {
-	FrameNumber uint64
-	Timestamp   time.Time
-	Size        int
-	Pattern     string
-}
+func NewVideoSimulator(id, signalAddr string, width, height int, certFile string) (*VideoSimulator, error) {
+	// Load the certificate for secure connection
+	cert, err := os.ReadFile(certFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read cert: %v", err)
+	}
 
-func NewCameraSimulator(id, signalAddr string, width, height int) *CameraSimulator {
-	return &CameraSimulator{
+	certPool := x509.NewCertPool()
+	if !certPool.AppendCertsFromPEM(cert) {
+		return nil, fmt.Errorf("failed to append cert")
+	}
+
+	tlsConfig := &tls.Config{
+		RootCAs:            certPool,
+		InsecureSkipVerify: false, // Set to true only for development
+	}
+
+	return &VideoSimulator{
 		id:         id,
 		signalAddr: signalAddr,
 		width:      width,
 		height:     height,
-		startTime:  time.Now(),
-	}
-}
-
-func (cs *CameraSimulator) Connect() error {
-	conn, _, err := websocket.DefaultDialer.Dial(cs.signalAddr, nil)
-	if err != nil {
-		return err
-	}
-	cs.conn = conn
-	return nil
-}
-
-func (cs *CameraSimulator) SimulateFrames() error {
-	ticker := time.NewTicker(time.Second / 30) // 30 FPS
-	defer ticker.Stop()
-
-	statsTicker := time.NewTicker(5 * time.Second) // Print stats every 5 seconds
-	defer statsTicker.Stop()
-
-	log.Printf("Starting frame simulation for camera %s", cs.id)
-	log.Printf("Resolution: %dx%d", cs.width, cs.height)
-
-	for {
-		select {
-		case <-ticker.C:
-			stats, err := cs.sendFrame()
-			if err != nil {
-				return err
-			}
-
-			// Print minimal frame info
-			if cs.frameCount%30 == 0 { // Print every 30 frames
-				log.Printf("Frame %d sent (Pattern: %s, Size: %d bytes)",
-					stats.FrameNumber, stats.Pattern, stats.Size)
-			}
-
-		case <-statsTicker.C:
-			// Print detailed stats every 5 seconds
-			duration := time.Since(cs.startTime)
-			fps := float64(cs.frameCount) / duration.Seconds()
-			log.Printf("\n=== Camera %s Statistics ===\n"+
-				"Uptime: %s\n"+
-				"Total Frames: %d\n"+
-				"Average FPS: %.2f\n"+
-				"Current Resolution: %dx%d\n",
-				cs.id, duration.Round(time.Second),
-				cs.frameCount, fps, cs.width, cs.height)
-		}
-	}
-}
-
-func (cs *CameraSimulator) sendFrame() (FrameStats, error) {
-	cs.frameCount++
-	frame, pattern := cs.generateFrame()
-
-	var buf bytes.Buffer
-	if err := jpeg.Encode(&buf, frame, &jpeg.Options{Quality: 75}); err != nil {
-		return FrameStats{}, err
-	}
-
-	base64Data := base64.StdEncoding.EncodeToString(buf.Bytes())
-
-	msg := struct {
-		Type   string    `json:"type"`
-		Data   string    `json:"data"`
-		Camera string    `json:"camera"`
-		Time   time.Time `json:"time"`
-	}{
-		Type:   "frame",
-		Data:   base64Data,
-		Camera: cs.id,
-		Time:   time.Now(),
-	}
-
-	if err := cs.conn.WriteJSON(msg); err != nil {
-		return FrameStats{}, err
-	}
-
-	return FrameStats{
-		FrameNumber: cs.frameCount,
-		Timestamp:   time.Now(),
-		Size:        buf.Len(),
-		Pattern:     pattern,
+		tlsConfig:  tlsConfig,
 	}, nil
 }
 
-func (cs *CameraSimulator) generateFrame() (image.Image, string) {
-	img := image.NewRGBA(image.Rect(0, 0, cs.width, cs.height))
-	pattern := ""
-
-	// Choose pattern based on time
-	switch (cs.frameCount / 150) % 4 { // Change pattern every 5 seconds (at 30 FPS)
-	case 0:
-		// Gradient pattern
-		pattern = "Gradient"
-		for y := 0; y < cs.height; y++ {
-			for x := 0; x < cs.width; x++ {
-				gradient := uint8((float64(x) / float64(cs.width)) * 255)
-				img.Set(x, y, color.Gray{Y: gradient})
-			}
-		}
-
-	case 1:
-		// Moving sine wave
-		pattern = "Sine Wave"
-		offset := float64(cs.frameCount) * 0.1
-		for x := 0; x < cs.width; x++ {
-			for y := 0; y < cs.height; y++ {
-				wave := math.Sin(float64(x)*0.05 + offset)
-				mid := float64(cs.height) / 2
-				pos := mid + wave*50
-				if math.Abs(float64(y)-pos) < 2 {
-					img.Set(x, y, color.White)
-				}
-			}
-		}
-
-	case 2:
-		// Checkerboard
-		pattern = "Checkerboard"
-		squareSize := 40
-		for y := 0; y < cs.height; y++ {
-			for x := 0; x < cs.width; x++ {
-				if ((x/squareSize)+(y/squareSize))%2 == 0 {
-					img.Set(x, y, color.White)
-				}
-			}
-		}
-
-	case 3:
-		// Moving circle
-		pattern = "Moving Circle"
-		centerX := cs.width/2 + int(math.Cos(float64(cs.frameCount)*0.05)*100)
-		centerY := cs.height/2 + int(math.Sin(float64(cs.frameCount)*0.05)*100)
-		radius := 50
-
-		for y := 0; y < cs.height; y++ {
-			for x := 0; x < cs.width; x++ {
-				dx := float64(x - centerX)
-				dy := float64(y - centerY)
-				dist := math.Sqrt(dx*dx + dy*dy)
-				if dist < float64(radius) {
-					img.Set(x, y, color.White)
-				}
-			}
-		}
+func (vs *VideoSimulator) Connect() error {
+	dialer := websocket.Dialer{
+		TLSClientConfig: vs.tlsConfig,
 	}
 
-	// Add timestamp
-	addTimestamp(img, cs.frameCount)
-	return img, pattern
+	conn, _, err := dialer.Dial(vs.signalAddr, nil)
+	if err != nil {
+		return err
+	}
+	vs.conn = conn
+	return nil
 }
 
-func addTimestamp(img *image.RGBA, frameNum uint64) {
-	timestamp := fmt.Sprintf("Frame: %d | Time: %s", frameNum, time.Now().Format("15:04:05"))
-	draw.Draw(img, image.Rect(10, 10, 300, 30), &image.Uniform{color.Black}, image.Point{}, draw.Over)
-	// Use the timestamp variable to avoid the declared and not used error
-	fmt.Println(timestamp)
-	// Note: In a real implementation, you'd want to use a proper font rendering library
+func (vs *VideoSimulator) StartStreaming() error {
+	// FFmpeg command to generate video stream
+	args := []string{
+		"-re",         // Read input at native framerate
+		"-f", "lavfi", // Use lavfi input
+		"-i", fmt.Sprintf("testsrc=size=%dx%d:rate=30", vs.width, vs.height), // Generate test pattern
+		"-c:v", "libx264", // Use H.264 codec
+		"-preset", "ultrafast", // Use ultrafast preset for low latency
+		"-tune", "zerolatency", // Tune for low latency
+		"-f", "rawvideo", // Output raw video
+		"-pix_fmt", "yuv420p", // Use YUV420P pixel format
+		"pipe:1", // Output to stdout
+	}
+
+	vs.ffmpeg = exec.Command("ffmpeg", args...)
+	stdout, err := vs.ffmpeg.StdoutPipe()
+	if err != nil {
+		return fmt.Errorf("failed to create stdout pipe: %v", err)
+	}
+
+	if err := vs.ffmpeg.Start(); err != nil {
+		return fmt.Errorf("failed to start ffmpeg: %v", err)
+	}
+
+	// Calculate frame size
+	frameSize := vs.width * vs.height * 3 // 3 bytes per pixel (RGB)
+	frame := make([]byte, frameSize)
+
+	// Start frame reading loop
+	go func() {
+		for {
+			_, err := stdout.Read(frame)
+			if err != nil {
+				log.Printf("Error reading frame: %v", err)
+				return
+			}
+
+			vs.frameCount++
+
+			// Encode frame as base64
+			encodedFrame := base64.StdEncoding.EncodeToString(frame)
+
+			// Send frame over WebSocket
+			msg := struct {
+				Type       string    `json:"type"`
+				Data       string    `json:"data"`
+				Camera     string    `json:"camera"`
+				Time       time.Time `json:"time"`
+				FrameNum   uint64    `json:"frame_num"`
+				IsKeyFrame bool      `json:"is_keyframe"`
+			}{
+				Type:       "frame",
+				Data:       encodedFrame,
+				Camera:     vs.id,
+				Time:       time.Now(),
+				FrameNum:   vs.frameCount,
+				IsKeyFrame: vs.frameCount%30 == 0, // Mark every 30th frame as keyframe
+			}
+
+			if err := vs.conn.WriteJSON(msg); err != nil {
+				log.Printf("Error sending frame: %v", err)
+				return
+			}
+
+			if vs.frameCount%30 == 0 {
+				log.Printf("Sent frame %d", vs.frameCount)
+			}
+		}
+	}()
+
+	return nil
+}
+
+func (vs *VideoSimulator) Stop() {
+	if vs.ffmpeg != nil && vs.ffmpeg.Process != nil {
+		vs.ffmpeg.Process.Kill()
+	}
+	if vs.conn != nil {
+		vs.conn.Close()
+	}
 }
 
 func main() {
 	id := flag.String("id", "cam1", "Camera ID")
-	addr := flag.String("addr", "ws://localhost:8080/camera/connect", "Signal server address")
-	width := flag.Int("width", 640, "Frame width")
-	height := flag.Int("height", 480, "Frame height")
+	addr := flag.String("addr", "wss://localhost:8080/camera/connect", "Signal server address")
+	width := flag.Int("width", 1280, "Frame width")
+	height := flag.Int("height", 720, "Frame height")
+	certFile := flag.String("cert", "certs/cert.pem", "Path to certificate file")
 	flag.Parse()
 
-	sim := NewCameraSimulator(*id, *addr, *width, *height)
+	sim, err := NewVideoSimulator(*id, *addr, *width, *height, *certFile)
+	if err != nil {
+		log.Fatalf("Failed to create simulator: %v", err)
+	}
+
 	if err := sim.Connect(); err != nil {
 		log.Fatalf("Failed to connect: %v", err)
 	}
 
-	log.Printf("Camera %s initialized successfully", *id)
-	log.Printf("Connecting to: %s", *addr)
-	log.Printf("Resolution: %dx%d", *width, *height)
-
-	if err := sim.SimulateFrames(); err != nil {
-		log.Fatalf("Streaming failed: %v", err)
+	log.Printf("Starting video stream for camera %s", *id)
+	if err := sim.StartStreaming(); err != nil {
+		log.Fatalf("Failed to start streaming: %v", err)
 	}
+
+	// Wait for interrupt signal
+	select {}
 }
