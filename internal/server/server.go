@@ -18,7 +18,7 @@ import (
 	"github.com/raeeceip/cctv/internal/config"
 	"github.com/raeeceip/cctv/internal/processor"
 )
-
+// i swear this was working an hour ago 
 type CameraMessage struct {
 	Type     string    `json:"type"`
 	Data     string    `json:"data"`
