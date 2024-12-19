@@ -1,0 +1,22 @@
+# config.yaml
+log_level: "debug"
+
+server:
+  host: "localhost"
+  port: 8080
+
+stream:
+  signal_address: "localhost:8081"
+  stream_address: "localhost:8082"
+  video_codec: "h264"
+  video_bitrate: 2000
+  framerate: 30
+  width: 1280
+  height: 720
+
+storage:
+  output_dir: "./frames"
+  save_frames: true
+  max_file_size: 104857600 # 100MB
+  max_disk_usage: 1073741824 # 1GB
+  max_frame_count: 1000
