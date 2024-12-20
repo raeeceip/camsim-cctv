@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -148,7 +149,6 @@ func NewLogger(level string, outputPath string) (*Logger, error) {
 		return nil, fmt.Errorf("failed to open log file: %w", err)
 	}
 
-	// Enhanced Zap configuration
 	encoderConfig := zapcore.EncoderConfig{
 		TimeKey:        "timestamp",
 		LevelKey:       "level",
@@ -163,29 +163,29 @@ func NewLogger(level string, outputPath string) (*Logger, error) {
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
 
-	cfg := zap.NewProductionConfig()
-	cfg.OutputPaths = []string{outputPath}
-	cfg.EncoderConfig = encoderConfig
+	// Create two cores with different configurations
+	fileCore := zapcore.NewCore(
+		zapcore.NewJSONEncoder(encoderConfig),
+		zapcore.AddSync(f),
+		zap.DebugLevel, // File gets all logs
+	)
 
-	var logLevel zapcore.Level
-	switch level {
-	case "debug":
-		logLevel = zap.DebugLevel
-	case "info":
-		logLevel = zap.InfoLevel
-	case "warn":
-		logLevel = zap.WarnLevel
-	case "error":
-		logLevel = zap.ErrorLevel
-	default:
-		logLevel = zap.InfoLevel
+	// Console only gets important logs and uses a simpler format
+	consoleEncoderConfig := encoderConfig
+	consoleEncoderConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+		enc.AppendString(t.Format("15:04:05"))
 	}
-	cfg.Level = zap.NewAtomicLevelAt(logLevel)
 
-	zapLogger, err := cfg.Build(zap.AddCaller())
-	if err != nil {
-		return nil, fmt.Errorf("failed to build zap logger: %w", err)
-	}
+	consoleCore := zapcore.NewCore(
+		zapcore.NewConsoleEncoder(consoleEncoderConfig),
+		zapcore.AddSync(os.Stdout),
+		zapcore.Level(parseLogLevel(level)), // Console level from config
+	)
+
+	// Combine cores
+	core := zapcore.NewTee(fileCore, consoleCore)
+
+	zapLogger := zap.New(core)
 
 	return &Logger{
 		Logger:     zapLogger,
@@ -193,6 +193,21 @@ func NewLogger(level string, outputPath string) (*Logger, error) {
 		outputFile: f,
 		level:      InfoLevel,
 	}, nil
+}
+
+func parseLogLevel(level string) zapcore.Level {
+	switch strings.ToLower(level) {
+	case "debug":
+		return zapcore.DebugLevel
+	case "info":
+		return zapcore.InfoLevel
+	case "warn":
+		return zapcore.WarnLevel
+	case "error":
+		return zapcore.ErrorLevel
+	default:
+		return zapcore.InfoLevel
+	}
 }
 
 // Modified logging methods to handle field conversion
@@ -276,7 +291,7 @@ func (l *Logger) StartUI() error {
 	l.uiProgram = program
 
 	go func() {
-		if err := program.Start(); err != nil {
+		if _, err := program.Run(); err != nil {
 			l.Error("failed to start UI", zap.Error(err))
 		}
 	}()

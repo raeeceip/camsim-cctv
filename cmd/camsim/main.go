@@ -13,22 +13,109 @@ import (
 	"log"
 	"math"
 	"os"
+	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/websocket"
 )
 
 type CameraSimulator struct {
-	id         string
-	signalAddr string
-	conn       *websocket.Conn
-	width      int
-	height     int
-	frameCount uint64
-	done       chan struct{}
-	wg         sync.WaitGroup
+	id              string
+	signalAddr      string
+	conn            *websocket.Conn
+	width           int
+	height          int
+	frameCount      uint64
+	done            chan struct{}
+	wg              sync.WaitGroup
+	frameBuffer     []*image.RGBA
+	frameBufferLock sync.Mutex
+	videoOutputDir  string
+}
+
+func (cs *CameraSimulator) saveVideo() error {
+	cs.frameBufferLock.Lock()
+	defer cs.frameBufferLock.Unlock()
+
+	if len(cs.frameBuffer) == 0 {
+		return fmt.Errorf("no frames to save")
+	}
+
+	// Ensure video output directory exists
+	if err := os.MkdirAll(cs.videoOutputDir, 0755); err != nil {
+		return fmt.Errorf("failed to create video directory: %w", err)
+	}
+
+	// Create temporary directory for frames
+	tempDir, err := os.MkdirTemp("", "cctv-frames-*")
+	if err != nil {
+		return fmt.Errorf("failed to create temp directory: %w", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Save frames as JPEG files
+	for i, frame := range cs.frameBuffer {
+		framePath := filepath.Join(tempDir, fmt.Sprintf("frame_%05d.jpg", i))
+		f, err := os.Create(framePath)
+		if err != nil {
+			return fmt.Errorf("failed to create frame file: %w", err)
+		}
+		if err := jpeg.Encode(f, frame, &jpeg.Options{Quality: 90}); err != nil {
+			f.Close()
+			return fmt.Errorf("failed to encode frame: %w", err)
+		}
+		f.Close()
+	}
+
+	// Create video file
+	outputPath := filepath.Join(cs.videoOutputDir,
+		fmt.Sprintf("%s_%s.mp4", cs.id, time.Now().Format("20060102_150405")))
+
+	// FFmpeg command to create video
+	cmd := exec.Command("ffmpeg",
+		"-y",
+		"-framerate", "30",
+		"-i", filepath.Join(tempDir, "frame_%05d.jpg"),
+		"-c:v", "libx264",
+		"-preset", "medium",
+		"-crf", "23",
+		"-pix_fmt", "yuv420p",
+		"-movflags", "+faststart",
+		outputPath)
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("ffmpeg error: %v\nOutput: %s", err, stderr.String())
+	}
+
+	log.Printf("Created video with %d frames: %s", len(cs.frameBuffer), outputPath)
+
+	// Clear buffer after successful save
+	cs.frameBuffer = nil
+
+	return nil
+}
+
+func (cs *CameraSimulator) addFrameToBuffer(frame *image.RGBA) {
+	cs.frameBufferLock.Lock()
+	defer cs.frameBufferLock.Unlock()
+
+	cs.frameBuffer = append(cs.frameBuffer, frame)
+
+	// Save video every 300 frames (10 seconds at 30fps)
+	if len(cs.frameBuffer) >= 300 {
+		go func() {
+			if err := cs.saveVideo(); err != nil {
+				log.Printf("Failed to save video: %v", err)
+			}
+		}()
+	}
 }
 
 func NewCameraSimulator(id, signalAddr string, width, height int) *CameraSimulator {
@@ -294,44 +381,45 @@ func (cs *CameraSimulator) Stop() {
 	cs.wg.Wait()
 	log.Println("Camera simulator stopped")
 }
-
 func main() {
 	// Parse command line flags
 	id := flag.String("id", "cam1", "Camera ID")
 	addr := flag.String("addr", "ws://localhost:8080/camera/connect", "Signal server address")
 	width := flag.Int("width", 640, "Frame width")
 	height := flag.Int("height", 480, "Frame height")
+	videoDir := flag.String("video-dir", "videos", "Video output directory")
 	flag.Parse()
 
 	log.Printf("Starting camera simulator with ID: %s", *id)
 	log.Printf("Resolution: %dx%d", *width, *height)
 	log.Printf("Server address: %s", *addr)
 
+	// Create and configure simulator
+	sim := NewCameraSimulator(*id, *addr, *width, *height)
+	sim.videoOutputDir = *videoDir
+
 	// Create context with cancellation
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
-	// Create and start simulator
-	sim := NewCameraSimulator(*id, *addr, *width, *height)
+	// Set up graceful shutdown
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		<-sigChan
+		log.Println("Received shutdown signal")
+		cancel()
+	}()
+
+	// Connect and start streaming
 	if err := sim.Connect(); err != nil {
 		log.Fatalf("Failed to connect: %v", err)
 	}
 
-	// Handle shutdown gracefully
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt)
-
-	go func() {
-		<-sigChan
-		log.Println("Received interrupt signal, shutting down...")
-		cancel()
-	}()
-
-	if err := sim.Start(ctx); err != nil {
-		if err.Error() != "not connected" {
-			log.Printf("Failed to start streaming: %v", err)
-		}
+	if err := sim.Start(ctx); err != nil && err != context.Canceled {
+		log.Printf("Streaming error: %v", err)
 	}
 
+	// Final cleanup
 	sim.Stop()
 }
