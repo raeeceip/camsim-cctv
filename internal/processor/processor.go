@@ -258,7 +258,15 @@ func (fp *FrameProcessor) processFrames(ctx context.Context) {
 	}
 }
 
+// In processor.go
+
+// Update the consolidateFrames function
 func (fp *FrameProcessor) consolidateFrames() error {
+	fp.mu.Lock()
+	defer fp.mu.Unlock()
+
+	var processedCameras []string
+
 	fp.processingMap.Range(func(key, value interface{}) bool {
 		cameraID := key.(string)
 		cameraDir := filepath.Join(fp.config.OutputDir, cameraID)
@@ -271,7 +279,8 @@ func (fp *FrameProcessor) consolidateFrames() error {
 			return true
 		}
 
-		if len(frames) == 0 {
+		if len(frames) < fp.config.MaxFrames {
+			// Not enough frames yet
 			return true
 		}
 
@@ -293,7 +302,7 @@ func (fp *FrameProcessor) consolidateFrames() error {
 				cameraID,
 				time.Now().Format("20060102_150405")))
 
-		if err := fp.createVideo(frames, videoPath); err != nil {
+		if err := fp.createVideo(frames[:fp.config.MaxFrames], videoPath); err != nil {
 			fp.logger.Error("Failed to create video",
 				zap.String("camera", cameraID),
 				zap.String("video_path", videoPath),
@@ -301,14 +310,16 @@ func (fp *FrameProcessor) consolidateFrames() error {
 			return true
 		}
 
+		processedCameras = append(processedCameras, cameraID)
+
 		fp.logger.Info("Video consolidation complete",
 			zap.String("camera", cameraID),
 			zap.String("video_path", videoPath),
-			zap.Int("processed_frames", len(frames)))
+			zap.Int("processed_frames", len(frames[:fp.config.MaxFrames])))
 
 		// Cleanup if configured
 		if fp.config.DeleteOriginals {
-			for _, frame := range frames {
+			for _, frame := range frames[:fp.config.MaxFrames] {
 				if err := os.Remove(frame); err != nil {
 					fp.logger.Warn("Failed to delete frame",
 						zap.String("camera", cameraID),
@@ -316,9 +327,21 @@ func (fp *FrameProcessor) consolidateFrames() error {
 						zap.Error(err))
 				}
 			}
-			fp.logger.Debug("Cleaned up original frames",
-				zap.String("camera", cameraID),
-				zap.Int("frames_deleted", len(frames)))
+
+			// Keep remaining frames
+			for i, frame := range frames[fp.config.MaxFrames:] {
+				newPath := filepath.Join(cameraDir,
+					fmt.Sprintf("frame_%05d_%s.jpg",
+						i+1,
+						time.Now().Format("20060102_150405")))
+				if err := os.Rename(frame, newPath); err != nil {
+					fp.logger.Warn("Failed to rename frame",
+						zap.String("camera", cameraID),
+						zap.String("frame", frame),
+						zap.String("new_path", newPath),
+						zap.Error(err))
+				}
+			}
 		}
 
 		return true
@@ -523,9 +546,21 @@ func (fp *FrameProcessor) Start(ctx context.Context) error {
 	return nil
 }
 
+func (fp *FrameProcessor) cleanup() error {
+	fp.logger.Info("Running final cleanup...")
+
+	return fp.consolidateFrames()
+}
+
+// Update the Stop function
 func (fp *FrameProcessor) Stop() {
 	fp.logger.Info("Stopping frame processor",
 		zap.Time("timestamp", time.Now()))
+
+	// Process any remaining frames
+	if err := fp.cleanup(); err != nil {
+		fp.logger.Error("Cleanup failed", zap.Error(err))
+	}
 
 	close(fp.frameChan)
 	close(fp.consolidateChan)

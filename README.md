@@ -2,50 +2,60 @@
 
 A lightweight, Go-based CCTV streaming system with real-time frame processing and video consolidation capabilities. The system supports websocket-based camera connections, frame processing, and automatic video generation.
 
-## Features
+## Core Components
 
-### Core Capabilities
+### Server Components
 
-- Real-time frame streaming over WebSocket
-- Automatic frame processing and storage
-- Video consolidation from captured frames
-- Configurable frame rates and quality settings
-- Health monitoring and metrics
-- Debug endpoints for system inspection
+- `server.go`: Core WebSocket server implementation that handles camera connections and frame receiving. Manages the lifecycle of camera connections and provides endpoints for health checks and metrics.
+- `processor.go`: Handles frame processing, storage, and video consolidation. Contains the logic for saving frames and creating videos from captured frames.
+- `camera.go`: Manages individual camera connections, handles signal and stream servers, and processes camera events.
+- `encoder.go`: Provides FFmpeg-based video encoding capabilities for real-time streaming.
 
-### Technical Features
+### Configuration & Utils
 
-- WebSocket-based camera connections with ping-pong keep-alive
-- Base64 frame encoding/decoding
-- JPEG image processing
-- FFmpeg video consolidation
-- Prometheus metrics export
-- Graceful shutdown handling
+- `config.go`: Configuration management using Viper, handles server, stream, and storage settings.
+- `logger.go`: Enhanced logging system with UI capabilities using Bubble Tea, supports log rotation and multiple outputs.
+- `metrics.go`: Prometheus metrics implementation for monitoring system performance.
+
+### Build & Setup Scripts
+
+- `build.sh`: Main build script that handles dependencies, compilation, and initial setup.
+- `setup.sh`: System setup script for initial configuration and testing.
 
 ## Architecture
 
+```mermaid
+graph TD
+    A[Camera] -->|WebSocket| B[Server]
+    B --> C[Frame Processor]
+    C --> D[Storage]
+    C -->|FFmpeg| E[Video Consolidation]
+    B -->|Metrics| F[Prometheus]
+    B -->|Logs| G[Logger]
 ```
-├── cmd/
-│   ├── cctvserver/
-│   │   └── main.go           # Server entry point
-│   └── camsim/
-│       └── main.go           # Camera simulator
-├── internal/
-│   ├── config/              # Configuration management
-│   │   └── config.go
-│   ├── processor/           # Frame processing
-│   │   └── processor.go
-│   ├── server/             # WebSocket server
-│   │   └── server.go
-│   └── stream/             # Stream management
-│       └── stream.go
-├── pkg/
-│   ├── logger/             # Logging utilities
-│   │   └── logger.go
-│   └── metrics/            # Prometheus metrics
-│       └── metrics.go
-└── setup.sh               # Setup and build script
-```
+
+## Key Features
+
+### Frame Processing Pipeline
+
+1. Frames received via WebSocket are base64 decoded
+2. Processed frames are saved to disk with metadata
+3. Automatic video consolidation when frame threshold is reached
+4. Configurable cleanup of processed frames
+
+### Monitoring & Logging
+
+- Real-time metrics via Prometheus
+- Enhanced logging with UI capabilities
+- Health check endpoints
+- Debug endpoints for system inspection
+
+### Camera Management
+
+- Automatic camera discovery and connection
+- Keep-alive with ping/pong
+- Graceful connection handling
+- Support for multiple camera streams
 
 ## Getting Started
 
@@ -53,7 +63,7 @@ A lightweight, Go-based CCTV streaming system with real-time frame processing an
 
 - Go 1.21 or higher
 - FFmpeg (for video consolidation)
-- WSL or Git Bash (for Windows users)
+- Git
 
 ### Quick Start
 
@@ -71,36 +81,6 @@ chmod +x setup.sh
 ./setup.sh
 ```
 
-The setup script will:
-
-- Install required dependencies
-- Build both server and camera simulator
-- Generate SSL certificates
-- Start the system
-- Record and process frames
-- Generate video output
-
-### Manual Setup
-
-1. Build the applications:
-
-```bash
-go build -o bin/cctvserver cmd/cctvserver/main.go
-go build -o bin/camerasim cmd/camsim/main.go
-```
-
-2. Start the server:
-
-```bash
-./bin/cctvserver
-```
-
-3. Start the camera simulator:
-
-```bash
-./bin/camerasim -id cam1 -addr "ws://localhost:8080/camera/connect"
-```
-
 ### Configuration
 
 The system is configured through `config.yaml`:
@@ -111,6 +91,8 @@ log_level: "debug"
 server:
   host: "localhost"
   port: 8080
+  signal_port: 8081
+  stream_port: 8082
 
 stream:
   video_codec: "h264"
@@ -122,71 +104,33 @@ stream:
 storage:
   output_dir: "./frames"
   save_frames: true
-  max_file_size: 104857600 # 100MB
-  max_disk_usage: 1073741824 # 1GB
-  max_frame_count: 1000
+  max_frames: 1000
+  retention_hours: 24
 ```
 
-## API Endpoints
+## Architecture Deep Dive
 
-### Camera Connection
+### Frame Processing Logic
 
-```http
-GET /camera/connect    # WebSocket endpoint for camera connections
-```
+1. Frames are received by `server.go` via WebSocket
+2. `processor.go` handles frame storage and processing
+3. When frame threshold is reached, video consolidation begins
+4. FFmpeg processes frames into a video file
+5. Original frames can be optionally cleaned up
 
-### Monitoring
+### Monitoring System
 
-```http
-GET /health           # Health check endpoint
-GET /metrics          # Prometheus metrics endpoint
-GET /debug/frames     # Debug endpoint for frame processing status
-```
-
-## Frame Processing
-
-The system processes frames in the following steps:
-
-1. Camera connects via WebSocket
-2. Frames are sent as base64-encoded JPEG images
-3. Frames are decoded and saved to disk
-4. Frames are consolidated into video files
-5. Optional cleanup of processed frames
-
-## Camera Simulator
-
-The included camera simulator provides test functionality:
-
-- Generates test patterns (gradient, sine wave, checkerboard, moving circle)
-- Configurable resolution and frame rate
-- Automatic WebSocket reconnection
-- Frame counting and statistics
-
-## Monitoring
-
-### Health Checks
-
-```http
-GET /health
-```
-
-Response:
-
-```json
-{
-	"status": "healthy",
-	"time": "2024-12-19T20:20:56Z"
-}
-```
-
-### Metrics
-
-The system exports Prometheus metrics for:
-
+- Real-time metrics tracking
 - Frame processing rates
-- Processing latency
-- Error counts
-- Connection status
+- Error tracking
+- System health monitoring
+
+### Logging System
+
+- Multi-level logging (debug, info, warn, error)
+- Log rotation
+- Console and file outputs
+- Interactive UI for log viewing
 
 ## Development
 
@@ -201,7 +145,7 @@ make run-sim    # Run the simulator
 ### Testing
 
 ```bash
-go test ./...
+go test ./...   # Run all tests
 ```
 
 ## Contributing
@@ -212,6 +156,14 @@ go test ./...
 4. Push to the branch
 5. Create a Pull Request
 
+## Known Issues & Future Improvements
+
+1. Video consolidation process needs optimization for large frame counts
+2. Memory usage during video creation could be improved
+3. More robust error handling for FFmpeg failures
+4. Enhanced camera discovery mechanism
+5. Support for more video codecs
+
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
@@ -219,4 +171,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 ## Contact
 
 - Discord: [discord.com/guynamedchiso](https://discord.com/guynamedchiso)
-- Email: [ chiboguchisomu@gmail.com ](mailto: chiboguchisomu@gmail.com)
+- Email: [chiboguchisomu@gmail.com](mailto:chiboguchisomu@gmail.com)
