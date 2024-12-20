@@ -3,7 +3,6 @@ package server
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"net/http"
 	"os"
@@ -30,13 +29,15 @@ type CameraMessage struct {
 }
 
 type Server struct {
-	router      *gin.Engine
-	logger      *logger.Logger
-	config      *config.Config
-	processor   *processor.FrameProcessor
-	upgrader    websocket.Upgrader
-	connections sync.Map
-	shutdown    chan struct{}
+	router          *gin.Engine
+	logger          *logger.Logger
+	config          *config.Config
+	processor       *processor.FrameProcessor
+	upgrader        websocket.Upgrader
+	connections     sync.Map
+	shutdown        chan struct{}
+	activeProcesses sync.WaitGroup
+	shutdownOnce    sync.Once
 }
 
 func New(cfg *config.Config, log *logger.Logger) (*Server, error) {
@@ -87,22 +88,36 @@ func New(cfg *config.Config, log *logger.Logger) (*Server, error) {
 }
 
 func (s *Server) handleCameraConnection(cameraID string, conn *websocket.Conn) {
+	s.activeProcesses.Add(1)
+	defer s.activeProcesses.Done()
+
 	s.logger.Info("Starting camera connection handler",
 		zap.String("camera_id", cameraID))
 
 	defer func() {
+		// Ensure clean connection closure
+		conn.WriteMessage(
+			websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 		conn.Close()
 		s.connections.Delete(cameraID)
 		s.logger.Info("Camera disconnected", zap.String("id", cameraID))
 	}()
 
 	// Set up connection parameters
-	conn.SetReadLimit(32 * 1024 * 1024) // 32MB
+	conn.SetReadLimit(32 * 1024 * 1024)
 	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 	conn.SetPongHandler(func(string) error {
 		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 		return nil
 	})
+
+	// Start ping handler
+	pingDone := make(chan struct{})
+	go func() {
+		defer close(pingDone)
+		s.handlePing(conn, cameraID)
+	}()
 
 	// Create camera-specific directory
 	cameraDir := filepath.Join(s.config.Storage.OutputDir, cameraID)
@@ -113,9 +128,7 @@ func (s *Server) handleCameraConnection(cameraID string, conn *websocket.Conn) {
 		return
 	}
 
-	// Start ping handler
-	go s.handlePing(conn, cameraID)
-
+	// Message handling loop
 	for {
 		var msg CameraMessage
 		err := conn.ReadJSON(&msg)
@@ -133,35 +146,14 @@ func (s *Server) handleCameraConnection(cameraID string, conn *websocket.Conn) {
 			zap.Uint64("frame", msg.FrameNum),
 			zap.Int("data_length", len(msg.Data)))
 
-		// Decode base64 frame data
-		frameData, err := base64.StdEncoding.DecodeString(msg.Data)
-		if err != nil {
-			s.logger.Error("Failed to decode frame data",
-				zap.String("camera", cameraID),
-				zap.Error(err))
-			continue
-		}
-
 		// Process frame
 		if s.processor != nil {
 			s.processor.ProcessFrame(processor.FrameData{
 				CameraID:  cameraID,
-				Data:      frameData,
+				Data:      []byte(msg.Data),
 				Timestamp: msg.Time,
 				Number:    msg.FrameNum,
 			})
-
-			// Log every 30th frame
-			if msg.FrameNum%30 == 0 {
-				s.logger.Info("Processed frame",
-					zap.String("camera", cameraID),
-					zap.Uint64("frame", msg.FrameNum),
-					zap.String("pattern", msg.Pattern))
-			}
-		} else {
-			s.logger.Error("Frame processor is nil",
-				zap.String("camera", cameraID))
-			return
 		}
 	}
 }
@@ -249,7 +241,6 @@ func (s *Server) setupRoutes() {
 	// Metrics endpoint
 	s.router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 }
-
 func (s *Server) Start(ctx context.Context) error {
 	// Start the processor if it hasn't been started
 	if err := s.processor.Start(ctx); err != nil {
@@ -264,29 +255,46 @@ func (s *Server) Start(ctx context.Context) error {
 	// Handle graceful shutdown
 	go func() {
 		<-ctx.Done()
-		s.logger.Info("Shutting down server...")
+		s.shutdownOnce.Do(func() {
+			s.logger.Info("Shutting down server...")
 
-		// Signal ping handlers to stop
-		close(s.shutdown)
+			// Signal ping handlers to stop
+			close(s.shutdown)
 
-		// Close all connections
-		s.connections.Range(func(key, value interface{}) bool {
-			if conn, ok := value.(*websocket.Conn); ok {
-				conn.WriteMessage(
-					websocket.CloseMessage,
-					websocket.FormatCloseMessage(websocket.CloseNormalClosure, "server shutdown"),
-				)
-				conn.Close()
+			// Close all connections gracefully
+			s.connections.Range(func(key, value interface{}) bool {
+				if conn, ok := value.(*websocket.Conn); ok {
+					conn.WriteMessage(
+						websocket.CloseMessage,
+						websocket.FormatCloseMessage(websocket.CloseNormalClosure, "server shutdown"))
+					conn.Close()
+				}
+				return true
+			})
+
+			// Wait for all active processes to complete
+			processDone := make(chan struct{})
+			go func() {
+				s.activeProcesses.Wait()
+				close(processDone)
+			}()
+
+			// Wait for processes with timeout
+			select {
+			case <-processDone:
+				s.logger.Info("All processes completed gracefully")
+			case <-time.After(5 * time.Second):
+				s.logger.Warn("Timeout waiting for processes to complete")
 			}
-			return true
+
+			// Shutdown server
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			if err := srv.Shutdown(shutdownCtx); err != nil {
+				s.logger.Error("Server shutdown error", zap.Error(err))
+			}
 		})
-
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		if err := srv.Shutdown(shutdownCtx); err != nil {
-			s.logger.Error("Server shutdown failed", zap.Error(err))
-		}
 	}()
 
 	s.logger.Info("Server starting",
@@ -300,6 +308,22 @@ func (s *Server) Start(ctx context.Context) error {
 }
 
 func (s *Server) Stop() {
-	close(s.shutdown)
-	s.processor.Stop()
+	s.shutdownOnce.Do(func() {
+		close(s.shutdown)
+		s.processor.Stop()
+
+		// Wait for active processes with timeout
+		done := make(chan struct{})
+		go func() {
+			s.activeProcesses.Wait()
+			close(done)
+		}()
+
+		select {
+		case <-done:
+			s.logger.Info("All processes completed gracefully")
+		case <-time.After(5 * time.Second):
+			s.logger.Warn("Timeout waiting for processes to complete")
+		}
+	})
 }

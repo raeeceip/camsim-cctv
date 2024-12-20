@@ -164,3 +164,371 @@
 {"level":"debug","timestamp":"2024-12-20T01:50:04.534-0500","msg":"Frame processed successfully","camera":"cam-1734677403","frame":37,"processing_time":"29.9024ms"}
 {"level":"info","timestamp":"2024-12-20T01:50:04.613-0500","msg":"Video created successfully","output":"frames\\videos\\cam-1734677403_20241220_015004.mp4","frame_count":30}
 {"level":"info","timestamp":"2024-12-20T01:50:04.614-0500","msg":"Video consolidation complete","camera":"cam-1734677403","video_path":"frames\\videos\\cam-1734677403_20241220_015004.mp4","processed_frames":30}
+{"level":"info","timestamp":"2024-12-20T01:52:37.506-0500","msg":"Starting CCTV System","version":"1.0.0","log_level":"debug","environment":"debug"}
+{"level":"info","timestamp":"2024-12-20T01:52:37.507-0500","msg":"Initializing frame processor","output_dir":"./frames","buffer_size":100,"retention_time":"24h0m0s"}
+{"level":"info","timestamp":"2024-12-20T01:52:37.509-0500","msg":"System initialized successfully","server_address":"localhost","server_port":8080}
+{"level":"info","timestamp":"2024-12-20T01:52:37.803-0500","msg":"Frame processor started successfully","max_frames":1000,"video_interval":"10s","output_dir":"./frames"}
+{"level":"info","timestamp":"2024-12-20T01:52:37.803-0500","msg":"Starting frame processing routine"}
+{"level":"info","timestamp":"2024-12-20T01:52:37.803-0500","msg":"Starting consolidation routine","interval":"10s"}
+{"level":"info","timestamp":"2024-12-20T01:52:37.804-0500","msg":"Server starting","address":"localhost:8080"}
+{"level":"info","timestamp":"2024-12-20T01:52:45.895-0500","msg":"Camera connected","id":"cam-1734677565"}
+{"level":"info","timestamp":"2024-12-20T01:52:45.896-0500","msg":"Starting camera connection handler","camera_id":"cam-1734677565"}
+{"level":"debug","timestamp":"2024-12-20T01:52:45.969-0500","msg":"Received frame message","camera":"cam-1734677565","frame":1,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:45.970-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":1,"timestamp":"2024-12-20T01:52:45.968-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:45.985-0500","msg":"Saved frame","camera":"cam-1734677565","frame":1,"file":"frames\\cam-1734677565\\frame_00001_20241220_015245.968.jpg","processing_time":"15.4356ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:45.987-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":1,"processing_time":"15.4356ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.004-0500","msg":"Received frame message","camera":"cam-1734677565","frame":2,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.012-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":2,"timestamp":"2024-12-20T01:52:46.001-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.032-0500","msg":"Saved frame","camera":"cam-1734677565","frame":2,"file":"frames\\cam-1734677565\\frame_00002_20241220_015246.001.jpg","processing_time":"17.4993ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.033-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":2,"processing_time":"17.4993ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.034-0500","msg":"Received frame message","camera":"cam-1734677565","frame":3,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.035-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":3,"timestamp":"2024-12-20T01:52:46.034-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.058-0500","msg":"Received frame message","camera":"cam-1734677565","frame":4,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.059-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":4,"timestamp":"2024-12-20T01:52:46.058-0500","queue_size":1,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.070-0500","msg":"Saved frame","camera":"cam-1734677565","frame":3,"file":"frames\\cam-1734677565\\frame_00003_20241220_015246.034.jpg","processing_time":"35.1487ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.071-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":3,"processing_time":"35.1487ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.086-0500","msg":"Saved frame","camera":"cam-1734677565","frame":4,"file":"frames\\cam-1734677565\\frame_00004_20241220_015246.058.jpg","processing_time":"14.8911ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.087-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":4,"processing_time":"14.8911ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.089-0500","msg":"Received frame message","camera":"cam-1734677565","frame":5,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.090-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":5,"timestamp":"2024-12-20T01:52:46.089-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.105-0500","msg":"Saved frame","camera":"cam-1734677565","frame":5,"file":"frames\\cam-1734677565\\frame_00005_20241220_015246.089.jpg","processing_time":"14.9999ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.106-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":5,"processing_time":"14.9999ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.120-0500","msg":"Received frame message","camera":"cam-1734677565","frame":6,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.120-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":6,"timestamp":"2024-12-20T01:52:46.120-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.134-0500","msg":"Saved frame","camera":"cam-1734677565","frame":6,"file":"frames\\cam-1734677565\\frame_00006_20241220_015246.120.jpg","processing_time":"14.0322ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.135-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":6,"processing_time":"14.0322ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.159-0500","msg":"Received frame message","camera":"cam-1734677565","frame":7,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.159-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":7,"timestamp":"2024-12-20T01:52:46.158-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.168-0500","msg":"Saved frame","camera":"cam-1734677565","frame":7,"file":"frames\\cam-1734677565\\frame_00007_20241220_015246.158.jpg","processing_time":"9.3735ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.168-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":7,"processing_time":"9.3735ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.188-0500","msg":"Received frame message","camera":"cam-1734677565","frame":8,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.188-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":8,"timestamp":"2024-12-20T01:52:46.188-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.198-0500","msg":"Saved frame","camera":"cam-1734677565","frame":8,"file":"frames\\cam-1734677565\\frame_00008_20241220_015246.188.jpg","processing_time":"10.0029ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.199-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":8,"processing_time":"10.0029ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.220-0500","msg":"Received frame message","camera":"cam-1734677565","frame":9,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.223-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":9,"timestamp":"2024-12-20T01:52:46.220-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.233-0500","msg":"Saved frame","camera":"cam-1734677565","frame":9,"file":"frames\\cam-1734677565\\frame_00009_20241220_015246.220.jpg","processing_time":"10.0001ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.234-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":9,"processing_time":"10.0001ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.255-0500","msg":"Received frame message","camera":"cam-1734677565","frame":10,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.256-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":10,"timestamp":"2024-12-20T01:52:46.254-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.270-0500","msg":"Saved frame","camera":"cam-1734677565","frame":10,"file":"frames\\cam-1734677565\\frame_00010_20241220_015246.254.jpg","processing_time":"13.9985ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.270-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":10,"processing_time":"13.9985ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.292-0500","msg":"Received frame message","camera":"cam-1734677565","frame":11,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.293-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":11,"timestamp":"2024-12-20T01:52:46.292-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.309-0500","msg":"Saved frame","camera":"cam-1734677565","frame":11,"file":"frames\\cam-1734677565\\frame_00011_20241220_015246.292.jpg","processing_time":"16.0019ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.310-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":11,"processing_time":"16.0019ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.324-0500","msg":"Received frame message","camera":"cam-1734677565","frame":12,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.325-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":12,"timestamp":"2024-12-20T01:52:46.324-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.342-0500","msg":"Saved frame","camera":"cam-1734677565","frame":12,"file":"frames\\cam-1734677565\\frame_00012_20241220_015246.324.jpg","processing_time":"17.0003ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.344-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":12,"processing_time":"17.0003ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.352-0500","msg":"Received frame message","camera":"cam-1734677565","frame":13,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.353-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":13,"timestamp":"2024-12-20T01:52:46.352-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.367-0500","msg":"Saved frame","camera":"cam-1734677565","frame":13,"file":"frames\\cam-1734677565\\frame_00013_20241220_015246.352.jpg","processing_time":"12.9964ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.367-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":13,"processing_time":"12.9964ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.391-0500","msg":"Received frame message","camera":"cam-1734677565","frame":14,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.392-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":14,"timestamp":"2024-12-20T01:52:46.391-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.402-0500","msg":"Saved frame","camera":"cam-1734677565","frame":14,"file":"frames\\cam-1734677565\\frame_00014_20241220_015246.391.jpg","processing_time":"10.5058ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.403-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":14,"processing_time":"10.5058ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.422-0500","msg":"Received frame message","camera":"cam-1734677565","frame":15,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.422-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":15,"timestamp":"2024-12-20T01:52:46.422-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.432-0500","msg":"Saved frame","camera":"cam-1734677565","frame":15,"file":"frames\\cam-1734677565\\frame_00015_20241220_015246.422.jpg","processing_time":"9.5508ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.433-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":15,"processing_time":"9.5508ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.449-0500","msg":"Received frame message","camera":"cam-1734677565","frame":16,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.450-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":16,"timestamp":"2024-12-20T01:52:46.449-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.460-0500","msg":"Saved frame","camera":"cam-1734677565","frame":16,"file":"frames\\cam-1734677565\\frame_00016_20241220_015246.449.jpg","processing_time":"9.8562ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.461-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":16,"processing_time":"9.8562ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.481-0500","msg":"Received frame message","camera":"cam-1734677565","frame":17,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.481-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":17,"timestamp":"2024-12-20T01:52:46.480-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.492-0500","msg":"Saved frame","camera":"cam-1734677565","frame":17,"file":"frames\\cam-1734677565\\frame_00017_20241220_015246.480.jpg","processing_time":"11.0082ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.493-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":17,"processing_time":"11.0082ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.510-0500","msg":"Received frame message","camera":"cam-1734677565","frame":18,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.511-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":18,"timestamp":"2024-12-20T01:52:46.510-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.525-0500","msg":"Saved frame","camera":"cam-1734677565","frame":18,"file":"frames\\cam-1734677565\\frame_00018_20241220_015246.510.jpg","processing_time":"13.652ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.529-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":18,"processing_time":"13.652ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.564-0500","msg":"Received frame message","camera":"cam-1734677565","frame":19,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.564-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":19,"timestamp":"2024-12-20T01:52:46.564-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.580-0500","msg":"Saved frame","camera":"cam-1734677565","frame":19,"file":"frames\\cam-1734677565\\frame_00019_20241220_015246.564.jpg","processing_time":"15.6748ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.581-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":19,"processing_time":"15.6748ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.588-0500","msg":"Received frame message","camera":"cam-1734677565","frame":20,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.588-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":20,"timestamp":"2024-12-20T01:52:46.587-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.602-0500","msg":"Saved frame","camera":"cam-1734677565","frame":20,"file":"frames\\cam-1734677565\\frame_00020_20241220_015246.587.jpg","processing_time":"13.5779ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.604-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":20,"processing_time":"13.5779ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.625-0500","msg":"Received frame message","camera":"cam-1734677565","frame":21,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.626-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":21,"timestamp":"2024-12-20T01:52:46.625-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.639-0500","msg":"Saved frame","camera":"cam-1734677565","frame":21,"file":"frames\\cam-1734677565\\frame_00021_20241220_015246.625.jpg","processing_time":"13.2197ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.640-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":21,"processing_time":"13.2197ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.655-0500","msg":"Received frame message","camera":"cam-1734677565","frame":22,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.656-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":22,"timestamp":"2024-12-20T01:52:46.655-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.668-0500","msg":"Saved frame","camera":"cam-1734677565","frame":22,"file":"frames\\cam-1734677565\\frame_00022_20241220_015246.655.jpg","processing_time":"11.9469ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.670-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":22,"processing_time":"11.9469ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.687-0500","msg":"Received frame message","camera":"cam-1734677565","frame":23,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.688-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":23,"timestamp":"2024-12-20T01:52:46.687-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.703-0500","msg":"Saved frame","camera":"cam-1734677565","frame":23,"file":"frames\\cam-1734677565\\frame_00023_20241220_015246.687.jpg","processing_time":"14.5053ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.703-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":23,"processing_time":"14.5053ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.721-0500","msg":"Received frame message","camera":"cam-1734677565","frame":24,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.721-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":24,"timestamp":"2024-12-20T01:52:46.720-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.737-0500","msg":"Saved frame","camera":"cam-1734677565","frame":24,"file":"frames\\cam-1734677565\\frame_00024_20241220_015246.720.jpg","processing_time":"15.9932ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.738-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":24,"processing_time":"15.9932ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.760-0500","msg":"Received frame message","camera":"cam-1734677565","frame":25,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.761-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":25,"timestamp":"2024-12-20T01:52:46.760-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.771-0500","msg":"Saved frame","camera":"cam-1734677565","frame":25,"file":"frames\\cam-1734677565\\frame_00025_20241220_015246.760.jpg","processing_time":"9.995ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.772-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":25,"processing_time":"9.995ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.790-0500","msg":"Received frame message","camera":"cam-1734677565","frame":26,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.791-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":26,"timestamp":"2024-12-20T01:52:46.789-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.800-0500","msg":"Saved frame","camera":"cam-1734677565","frame":26,"file":"frames\\cam-1734677565\\frame_00026_20241220_015246.789.jpg","processing_time":"9.0292ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.801-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":26,"processing_time":"9.0292ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.822-0500","msg":"Received frame message","camera":"cam-1734677565","frame":27,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.825-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":27,"timestamp":"2024-12-20T01:52:46.820-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.836-0500","msg":"Saved frame","camera":"cam-1734677565","frame":27,"file":"frames\\cam-1734677565\\frame_00027_20241220_015246.820.jpg","processing_time":"10.4498ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.837-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":27,"processing_time":"10.4498ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.853-0500","msg":"Received frame message","camera":"cam-1734677565","frame":28,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.855-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":28,"timestamp":"2024-12-20T01:52:46.852-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.866-0500","msg":"Saved frame","camera":"cam-1734677565","frame":28,"file":"frames\\cam-1734677565\\frame_00028_20241220_015246.852.jpg","processing_time":"10.6987ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.866-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":28,"processing_time":"10.6987ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.882-0500","msg":"Received frame message","camera":"cam-1734677565","frame":29,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.884-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":29,"timestamp":"2024-12-20T01:52:46.881-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.894-0500","msg":"Saved frame","camera":"cam-1734677565","frame":29,"file":"frames\\cam-1734677565\\frame_00029_20241220_015246.881.jpg","processing_time":"9.5169ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.894-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":29,"processing_time":"9.5169ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.912-0500","msg":"Received frame message","camera":"cam-1734677565","frame":30,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.913-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":30,"timestamp":"2024-12-20T01:52:46.912-0500","queue_size":0,"queue_capacity":100}
+{"level":"info","timestamp":"2024-12-20T01:52:46.917-0500","msg":"Processed frame","camera":"cam-1734677565","frame":30,"pattern":"Gradient"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.924-0500","msg":"Saved frame","camera":"cam-1734677565","frame":30,"file":"frames\\cam-1734677565\\frame_00030_20241220_015246.912.jpg","processing_time":"11.1275ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.925-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":30,"processing_time":"11.1275ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.929-0500","msg":"Triggered frame consolidation","camera":"cam-1734677565","frame_count":30}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.929-0500","msg":"Received immediate consolidation signal"}
+{"level":"info","timestamp":"2024-12-20T01:52:46.930-0500","msg":"Consolidating frames","camera":"cam-1734677565","frame_count":30}
+{"level":"info","timestamp":"2024-12-20T01:52:46.957-0500","msg":"Starting video creation","frame_count":30,"first_frame":"frames\\cam-1734677565\\frame_00001_20241220_015245.968.jpg","output":"frames\\videos\\cam-1734677565_20241220_015246.mp4"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.964-0500","msg":"Received frame message","camera":"cam-1734677565","frame":31,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.964-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":31,"timestamp":"2024-12-20T01:52:46.963-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.977-0500","msg":"Saved frame","camera":"cam-1734677565","frame":31,"file":"frames\\cam-1734677565\\frame_00031_20241220_015246.963.jpg","processing_time":"12.013ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.979-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":31,"processing_time":"12.013ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.983-0500","msg":"Received frame message","camera":"cam-1734677565","frame":32,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.984-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":32,"timestamp":"2024-12-20T01:52:46.983-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:46.990-0500","msg":"Running FFmpeg command","command":"ffmpeg -y -f concat -safe 0 -i frames/cam-1734677565/frames_list_1734677566956681900.txt -vcodec libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart frames/videos/cam-1734677565_20241220_015246.mp4","working_dir":""}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.040-0500","msg":"Saved frame","camera":"cam-1734677565","frame":32,"file":"frames\\cam-1734677565\\frame_00032_20241220_015246.983.jpg","processing_time":"56.0996ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.073-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":32,"processing_time":"56.0996ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.127-0500","msg":"Received frame message","camera":"cam-1734677565","frame":33,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.130-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":33,"timestamp":"2024-12-20T01:52:47.109-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.159-0500","msg":"Saved frame","camera":"cam-1734677565","frame":33,"file":"frames\\cam-1734677565\\frame_00033_20241220_015247.109.jpg","processing_time":"26.7735ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.167-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":33,"processing_time":"26.7735ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.189-0500","msg":"Received frame message","camera":"cam-1734677565","frame":34,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.193-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":34,"timestamp":"2024-12-20T01:52:47.184-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.244-0500","msg":"Saved frame","camera":"cam-1734677565","frame":34,"file":"frames\\cam-1734677565\\frame_00034_20241220_015247.184.jpg","processing_time":"51.2173ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.244-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":34,"processing_time":"51.2173ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.248-0500","msg":"Received frame message","camera":"cam-1734677565","frame":35,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.256-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":35,"timestamp":"2024-12-20T01:52:47.231-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.292-0500","msg":"Received frame message","camera":"cam-1734677565","frame":36,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.293-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":36,"timestamp":"2024-12-20T01:52:47.271-0500","queue_size":1,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.303-0500","msg":"Saved frame","camera":"cam-1734677565","frame":35,"file":"frames\\cam-1734677565\\frame_00035_20241220_015247.231.jpg","processing_time":"46.703ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.304-0500","msg":"Received frame message","camera":"cam-1734677565","frame":37,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.305-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":35,"processing_time":"46.703ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.306-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":37,"timestamp":"2024-12-20T01:52:47.301-0500","queue_size":2,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.327-0500","msg":"Saved frame","camera":"cam-1734677565","frame":36,"file":"frames\\cam-1734677565\\frame_00036_20241220_015247.271.jpg","processing_time":"20.5632ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.335-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":36,"processing_time":"20.5632ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.346-0500","msg":"Received frame message","camera":"cam-1734677565","frame":38,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.353-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":38,"timestamp":"2024-12-20T01:52:47.343-0500","queue_size":1,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.372-0500","msg":"Saved frame","camera":"cam-1734677565","frame":37,"file":"frames\\cam-1734677565\\frame_00037_20241220_015247.301.jpg","processing_time":"36.5473ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.374-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":37,"processing_time":"36.5473ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.388-0500","msg":"Received frame message","camera":"cam-1734677565","frame":39,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.408-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":39,"timestamp":"2024-12-20T01:52:47.383-0500","queue_size":1,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.425-0500","msg":"Saved frame","camera":"cam-1734677565","frame":38,"file":"frames\\cam-1734677565\\frame_00038_20241220_015247.343.jpg","processing_time":"49.1627ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.427-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":38,"processing_time":"49.1627ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.429-0500","msg":"Received frame message","camera":"cam-1734677565","frame":40,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.472-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":40,"timestamp":"2024-12-20T01:52:47.429-0500","queue_size":1,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.486-0500","msg":"Received frame message","camera":"cam-1734677565","frame":41,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.488-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":41,"timestamp":"2024-12-20T01:52:47.482-0500","queue_size":2,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.493-0500","msg":"Saved frame","camera":"cam-1734677565","frame":39,"file":"frames\\cam-1734677565\\frame_00039_20241220_015247.383.jpg","processing_time":"54.6246ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.495-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":39,"processing_time":"54.6246ms"}
+{"level":"info","timestamp":"2024-12-20T01:52:47.511-0500","msg":"Video created successfully","output":"frames\\videos\\cam-1734677565_20241220_015246.mp4","frame_count":30}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.512-0500","msg":"Received frame message","camera":"cam-1734677565","frame":42,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.525-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":42,"timestamp":"2024-12-20T01:52:47.512-0500","queue_size":2,"queue_capacity":100}
+{"level":"info","timestamp":"2024-12-20T01:52:47.525-0500","msg":"Video consolidation complete","camera":"cam-1734677565","video_path":"frames\\videos\\cam-1734677565_20241220_015246.mp4","processed_frames":30}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.526-0500","msg":"Saved frame","camera":"cam-1734677565","frame":40,"file":"frames\\cam-1734677565\\frame_00040_20241220_015247.429.jpg","processing_time":"31.2623ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.532-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":40,"processing_time":"31.2623ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.564-0500","msg":"Received frame message","camera":"cam-1734677565","frame":43,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.564-0500","msg":"Saved frame","camera":"cam-1734677565","frame":41,"file":"frames\\cam-1734677565\\frame_00041_20241220_015247.482.jpg","processing_time":"30.2413ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.569-0500","msg":"Queued frame for processing","camera":"cam-1734677565","frame":43,"timestamp":"2024-12-20T01:52:47.546-0500","queue_size":2,"queue_capacity":100}
+{"level":"info","timestamp":"2024-12-20T01:52:47.569-0500","msg":"Camera disconnected","id":"cam-1734677565"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.571-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":41,"processing_time":"30.2413ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.598-0500","msg":"Saved frame","camera":"cam-1734677565","frame":42,"file":"frames\\cam-1734677565\\frame_00042_20241220_015247.512.jpg","processing_time":"26.1184ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.600-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":42,"processing_time":"26.1184ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.616-0500","msg":"Saved frame","camera":"cam-1734677565","frame":43,"file":"frames\\cam-1734677565\\frame_00043_20241220_015247.546.jpg","processing_time":"16.3418ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.617-0500","msg":"Frame processed successfully","camera":"cam-1734677565","frame":43,"processing_time":"16.3418ms"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.808-0500","msg":"Running scheduled consolidation","timestamp":"2024-12-20T01:52:47.808-0500","interval":"10s"}
+{"level":"info","timestamp":"2024-12-20T01:52:47.809-0500","msg":"Consolidating frames","camera":"cam-1734677565","frame_count":43}
+{"level":"info","timestamp":"2024-12-20T01:52:47.836-0500","msg":"Starting video creation","frame_count":43,"first_frame":"frames\\cam-1734677565\\frame_00001_20241220_015245.968.jpg","output":"frames\\videos\\cam-1734677565_20241220_015247.mp4"}
+{"level":"debug","timestamp":"2024-12-20T01:52:47.861-0500","msg":"Running FFmpeg command","command":"ffmpeg -y -f concat -safe 0 -i frames/cam-1734677565/frames_list_1734677567835773600.txt -vcodec libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart frames/videos/cam-1734677565_20241220_015247.mp4","working_dir":""}
+{"level":"info","timestamp":"2024-12-20T01:52:48.083-0500","msg":"Video created successfully","output":"frames\\videos\\cam-1734677565_20241220_015247.mp4","frame_count":43}
+{"level":"info","timestamp":"2024-12-20T01:52:48.084-0500","msg":"Video consolidation complete","camera":"cam-1734677565","video_path":"frames\\videos\\cam-1734677565_20241220_015247.mp4","processed_frames":43}
+{"level":"info","timestamp":"2024-12-20T01:55:57.714-0500","msg":"Starting CCTV System","version":"1.0.0","log_level":"debug","environment":"debug"}
+{"level":"info","timestamp":"2024-12-20T01:55:57.715-0500","msg":"Initializing frame processor","output_dir":"./frames","buffer_size":100,"retention_time":"24h0m0s"}
+{"level":"info","timestamp":"2024-12-20T01:55:57.717-0500","msg":"System initialized successfully","server_address":"localhost","server_port":8080}
+{"level":"info","timestamp":"2024-12-20T01:55:58.063-0500","msg":"Frame processor started successfully","max_frames":1000,"video_interval":"10s","output_dir":"./frames"}
+{"level":"info","timestamp":"2024-12-20T01:55:58.066-0500","msg":"Starting frame processing routine"}
+{"level":"info","timestamp":"2024-12-20T01:55:58.066-0500","msg":"Starting consolidation routine","interval":"10s"}
+{"level":"info","timestamp":"2024-12-20T01:55:58.070-0500","msg":"Server starting","address":"localhost:8080"}
+{"level":"info","timestamp":"2024-12-20T01:56:07.433-0500","msg":"Starting CCTV System","version":"1.0.0","log_level":"debug","environment":"debug"}
+{"level":"info","timestamp":"2024-12-20T01:56:07.434-0500","msg":"Initializing frame processor","output_dir":"./frames","buffer_size":100,"retention_time":"24h0m0s"}
+{"level":"info","timestamp":"2024-12-20T01:56:07.436-0500","msg":"System initialized successfully","server_address":"localhost","server_port":8080}
+{"level":"info","timestamp":"2024-12-20T01:56:07.746-0500","msg":"Frame processor started successfully","max_frames":1000,"video_interval":"10s","output_dir":"./frames"}
+{"level":"info","timestamp":"2024-12-20T01:56:07.746-0500","msg":"Starting frame processing routine"}
+{"level":"info","timestamp":"2024-12-20T01:56:07.746-0500","msg":"Starting consolidation routine","interval":"10s"}
+{"level":"info","timestamp":"2024-12-20T01:56:07.746-0500","msg":"Server starting","address":"localhost:8080"}
+{"level":"info","timestamp":"2024-12-20T01:56:11.528-0500","msg":"Camera connected","id":"cam-1734677771"}
+{"level":"info","timestamp":"2024-12-20T01:56:11.529-0500","msg":"Starting camera connection handler","camera_id":"cam-1734677771"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.585-0500","msg":"Received frame message","camera":"cam-1734677771","frame":1,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.585-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":1,"timestamp":"2024-12-20T01:56:11.584-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.595-0500","msg":"Saved frame","camera":"cam-1734677771","frame":1,"file":"frames\\cam-1734677771\\frame_00001_20241220_015611.584.jpg","processing_time":"10.2253ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.596-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":1,"processing_time":"10.2253ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.613-0500","msg":"Received frame message","camera":"cam-1734677771","frame":2,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.614-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":2,"timestamp":"2024-12-20T01:56:11.613-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.623-0500","msg":"Saved frame","camera":"cam-1734677771","frame":2,"file":"frames\\cam-1734677771\\frame_00002_20241220_015611.613.jpg","processing_time":"9.5193ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.625-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":2,"processing_time":"9.5193ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.644-0500","msg":"Received frame message","camera":"cam-1734677771","frame":3,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.644-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":3,"timestamp":"2024-12-20T01:56:11.643-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.654-0500","msg":"Saved frame","camera":"cam-1734677771","frame":3,"file":"frames\\cam-1734677771\\frame_00003_20241220_015611.643.jpg","processing_time":"9.6146ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.654-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":3,"processing_time":"9.6146ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.689-0500","msg":"Received frame message","camera":"cam-1734677771","frame":4,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.690-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":4,"timestamp":"2024-12-20T01:56:11.689-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.702-0500","msg":"Saved frame","camera":"cam-1734677771","frame":4,"file":"frames\\cam-1734677771\\frame_00004_20241220_015611.689.jpg","processing_time":"11.3626ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.703-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":4,"processing_time":"11.3626ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.723-0500","msg":"Received frame message","camera":"cam-1734677771","frame":5,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.724-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":5,"timestamp":"2024-12-20T01:56:11.722-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.752-0500","msg":"Received frame message","camera":"cam-1734677771","frame":6,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.753-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":6,"timestamp":"2024-12-20T01:56:11.751-0500","queue_size":1,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.757-0500","msg":"Saved frame","camera":"cam-1734677771","frame":5,"file":"frames\\cam-1734677771\\frame_00005_20241220_015611.722.jpg","processing_time":"32.5961ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.758-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":5,"processing_time":"32.5961ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.770-0500","msg":"Saved frame","camera":"cam-1734677771","frame":6,"file":"frames\\cam-1734677771\\frame_00006_20241220_015611.751.jpg","processing_time":"12.1231ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.772-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":6,"processing_time":"12.1231ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.785-0500","msg":"Received frame message","camera":"cam-1734677771","frame":7,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.785-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":7,"timestamp":"2024-12-20T01:56:11.785-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.794-0500","msg":"Saved frame","camera":"cam-1734677771","frame":7,"file":"frames\\cam-1734677771\\frame_00007_20241220_015611.785.jpg","processing_time":"9.7876ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.795-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":7,"processing_time":"9.7876ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.812-0500","msg":"Received frame message","camera":"cam-1734677771","frame":8,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.813-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":8,"timestamp":"2024-12-20T01:56:11.812-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.823-0500","msg":"Saved frame","camera":"cam-1734677771","frame":8,"file":"frames\\cam-1734677771\\frame_00008_20241220_015611.812.jpg","processing_time":"10.0257ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.823-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":8,"processing_time":"10.0257ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.844-0500","msg":"Received frame message","camera":"cam-1734677771","frame":9,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.845-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":9,"timestamp":"2024-12-20T01:56:11.844-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.853-0500","msg":"Saved frame","camera":"cam-1734677771","frame":9,"file":"frames\\cam-1734677771\\frame_00009_20241220_015611.844.jpg","processing_time":"8.0283ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.854-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":9,"processing_time":"8.0283ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.895-0500","msg":"Received frame message","camera":"cam-1734677771","frame":10,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.895-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":10,"timestamp":"2024-12-20T01:56:11.894-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.904-0500","msg":"Saved frame","camera":"cam-1734677771","frame":10,"file":"frames\\cam-1734677771\\frame_00010_20241220_015611.894.jpg","processing_time":"9.4263ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.905-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":10,"processing_time":"9.4263ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.918-0500","msg":"Received frame message","camera":"cam-1734677771","frame":11,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.919-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":11,"timestamp":"2024-12-20T01:56:11.918-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.929-0500","msg":"Saved frame","camera":"cam-1734677771","frame":11,"file":"frames\\cam-1734677771\\frame_00011_20241220_015611.918.jpg","processing_time":"9.6574ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.929-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":11,"processing_time":"9.6574ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.952-0500","msg":"Received frame message","camera":"cam-1734677771","frame":12,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.953-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":12,"timestamp":"2024-12-20T01:56:11.952-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.963-0500","msg":"Saved frame","camera":"cam-1734677771","frame":12,"file":"frames\\cam-1734677771\\frame_00012_20241220_015611.952.jpg","processing_time":"9.5664ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.963-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":12,"processing_time":"9.5664ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.981-0500","msg":"Received frame message","camera":"cam-1734677771","frame":13,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.981-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":13,"timestamp":"2024-12-20T01:56:11.981-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.994-0500","msg":"Saved frame","camera":"cam-1734677771","frame":13,"file":"frames\\cam-1734677771\\frame_00013_20241220_015611.981.jpg","processing_time":"13.023ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:11.996-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":13,"processing_time":"13.023ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.012-0500","msg":"Received frame message","camera":"cam-1734677771","frame":14,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.013-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":14,"timestamp":"2024-12-20T01:56:12.012-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.026-0500","msg":"Saved frame","camera":"cam-1734677771","frame":14,"file":"frames\\cam-1734677771\\frame_00014_20241220_015612.012.jpg","processing_time":"12.4617ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.027-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":14,"processing_time":"12.4617ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.042-0500","msg":"Received frame message","camera":"cam-1734677771","frame":15,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.043-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":15,"timestamp":"2024-12-20T01:56:12.042-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.054-0500","msg":"Saved frame","camera":"cam-1734677771","frame":15,"file":"frames\\cam-1734677771\\frame_00015_20241220_015612.042.jpg","processing_time":"11.1041ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.055-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":15,"processing_time":"11.1041ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.090-0500","msg":"Received frame message","camera":"cam-1734677771","frame":16,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.090-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":16,"timestamp":"2024-12-20T01:56:12.089-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.102-0500","msg":"Saved frame","camera":"cam-1734677771","frame":16,"file":"frames\\cam-1734677771\\frame_00016_20241220_015612.089.jpg","processing_time":"11.6815ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.102-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":16,"processing_time":"11.6815ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.120-0500","msg":"Received frame message","camera":"cam-1734677771","frame":17,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.120-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":17,"timestamp":"2024-12-20T01:56:12.119-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.138-0500","msg":"Saved frame","camera":"cam-1734677771","frame":17,"file":"frames\\cam-1734677771\\frame_00017_20241220_015612.119.jpg","processing_time":"17.9977ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.142-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":17,"processing_time":"17.9977ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.157-0500","msg":"Received frame message","camera":"cam-1734677771","frame":18,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.158-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":18,"timestamp":"2024-12-20T01:56:12.157-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.169-0500","msg":"Saved frame","camera":"cam-1734677771","frame":18,"file":"frames\\cam-1734677771\\frame_00018_20241220_015612.157.jpg","processing_time":"11.0025ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.171-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":18,"processing_time":"11.0025ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.192-0500","msg":"Received frame message","camera":"cam-1734677771","frame":19,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.192-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":19,"timestamp":"2024-12-20T01:56:12.192-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.205-0500","msg":"Saved frame","camera":"cam-1734677771","frame":19,"file":"frames\\cam-1734677771\\frame_00019_20241220_015612.192.jpg","processing_time":"12.9674ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.206-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":19,"processing_time":"12.9674ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.217-0500","msg":"Received frame message","camera":"cam-1734677771","frame":20,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.218-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":20,"timestamp":"2024-12-20T01:56:12.217-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.231-0500","msg":"Saved frame","camera":"cam-1734677771","frame":20,"file":"frames\\cam-1734677771\\frame_00020_20241220_015612.217.jpg","processing_time":"12.9159ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.232-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":20,"processing_time":"12.9159ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.248-0500","msg":"Received frame message","camera":"cam-1734677771","frame":21,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.249-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":21,"timestamp":"2024-12-20T01:56:12.248-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.259-0500","msg":"Saved frame","camera":"cam-1734677771","frame":21,"file":"frames\\cam-1734677771\\frame_00021_20241220_015612.248.jpg","processing_time":"10.3173ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.260-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":21,"processing_time":"10.3173ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.295-0500","msg":"Received frame message","camera":"cam-1734677771","frame":22,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.295-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":22,"timestamp":"2024-12-20T01:56:12.294-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.310-0500","msg":"Saved frame","camera":"cam-1734677771","frame":22,"file":"frames\\cam-1734677771\\frame_00022_20241220_015612.294.jpg","processing_time":"15.0012ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.311-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":22,"processing_time":"15.0012ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.329-0500","msg":"Received frame message","camera":"cam-1734677771","frame":23,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.329-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":23,"timestamp":"2024-12-20T01:56:12.328-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.345-0500","msg":"Saved frame","camera":"cam-1734677771","frame":23,"file":"frames\\cam-1734677771\\frame_00023_20241220_015612.328.jpg","processing_time":"16.0009ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.345-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":23,"processing_time":"16.0009ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.350-0500","msg":"Received frame message","camera":"cam-1734677771","frame":24,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.350-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":24,"timestamp":"2024-12-20T01:56:12.350-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.361-0500","msg":"Saved frame","camera":"cam-1734677771","frame":24,"file":"frames\\cam-1734677771\\frame_00024_20241220_015612.350.jpg","processing_time":"10.9929ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.363-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":24,"processing_time":"10.9929ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.381-0500","msg":"Received frame message","camera":"cam-1734677771","frame":25,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.383-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":25,"timestamp":"2024-12-20T01:56:12.381-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.395-0500","msg":"Saved frame","camera":"cam-1734677771","frame":25,"file":"frames\\cam-1734677771\\frame_00025_20241220_015612.381.jpg","processing_time":"12.1018ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.396-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":25,"processing_time":"12.1018ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.415-0500","msg":"Received frame message","camera":"cam-1734677771","frame":26,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.417-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":26,"timestamp":"2024-12-20T01:56:12.415-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.429-0500","msg":"Saved frame","camera":"cam-1734677771","frame":26,"file":"frames\\cam-1734677771\\frame_00026_20241220_015612.415.jpg","processing_time":"11.5872ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.430-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":26,"processing_time":"11.5872ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.460-0500","msg":"Received frame message","camera":"cam-1734677771","frame":27,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.460-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":27,"timestamp":"2024-12-20T01:56:12.459-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.470-0500","msg":"Saved frame","camera":"cam-1734677771","frame":27,"file":"frames\\cam-1734677771\\frame_00027_20241220_015612.459.jpg","processing_time":"9.4613ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.471-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":27,"processing_time":"9.4613ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.498-0500","msg":"Received frame message","camera":"cam-1734677771","frame":28,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.499-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":28,"timestamp":"2024-12-20T01:56:12.498-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.519-0500","msg":"Saved frame","camera":"cam-1734677771","frame":28,"file":"frames\\cam-1734677771\\frame_00028_20241220_015612.498.jpg","processing_time":"20.0004ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.519-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":28,"processing_time":"20.0004ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.528-0500","msg":"Received frame message","camera":"cam-1734677771","frame":29,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.530-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":29,"timestamp":"2024-12-20T01:56:12.527-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.553-0500","msg":"Saved frame","camera":"cam-1734677771","frame":29,"file":"frames\\cam-1734677771\\frame_00029_20241220_015612.527.jpg","processing_time":"23.0297ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.558-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":29,"processing_time":"23.0297ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.573-0500","msg":"Received frame message","camera":"cam-1734677771","frame":30,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.575-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":30,"timestamp":"2024-12-20T01:56:12.573-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.604-0500","msg":"Saved frame","camera":"cam-1734677771","frame":30,"file":"frames\\cam-1734677771\\frame_00030_20241220_015612.573.jpg","processing_time":"28.8376ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.606-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":30,"processing_time":"28.8376ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.607-0500","msg":"Triggered frame consolidation","camera":"cam-1734677771","frame_count":30}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.607-0500","msg":"Received immediate consolidation signal"}
+{"level":"info","timestamp":"2024-12-20T01:56:12.610-0500","msg":"Consolidating frames","camera":"cam-1734677771","frame_count":30}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.615-0500","msg":"Received frame message","camera":"cam-1734677771","frame":31,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.616-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":31,"timestamp":"2024-12-20T01:56:12.611-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.650-0500","msg":"Received frame message","camera":"cam-1734677771","frame":32,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.651-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":32,"timestamp":"2024-12-20T01:56:12.650-0500","queue_size":1,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.651-0500","msg":"Saved frame","camera":"cam-1734677771","frame":31,"file":"frames\\cam-1734677771\\frame_00031_20241220_015612.611.jpg","processing_time":"34.8218ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.657-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":31,"processing_time":"34.8218ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.682-0500","msg":"Saved frame","camera":"cam-1734677771","frame":32,"file":"frames\\cam-1734677771\\frame_00032_20241220_015612.650.jpg","processing_time":"23.8694ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.685-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":32,"processing_time":"23.8694ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.685-0500","msg":"Received frame message","camera":"cam-1734677771","frame":33,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.688-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":33,"timestamp":"2024-12-20T01:56:12.684-0500","queue_size":0,"queue_capacity":100}
+{"level":"info","timestamp":"2024-12-20T01:56:12.691-0500","msg":"Starting video creation","frame_count":30,"first_frame":"frames\\cam-1734677771\\frame_00001_20241220_015611.584.jpg","output":"frames\\videos\\cam-1734677771_20241220_015612.mp4"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.737-0500","msg":"Saved frame","camera":"cam-1734677771","frame":33,"file":"frames\\cam-1734677771\\frame_00033_20241220_015612.684.jpg","processing_time":"48.8913ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.738-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":33,"processing_time":"48.8913ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.755-0500","msg":"Received frame message","camera":"cam-1734677771","frame":34,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.772-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":34,"timestamp":"2024-12-20T01:56:12.744-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.779-0500","msg":"Running FFmpeg command","command":"ffmpeg -y -f concat -safe 0 -i frames/cam-1734677771/frames_list_1734677772690265900.txt -vcodec libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart frames/videos/cam-1734677771_20241220_015612.mp4","working_dir":""}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.789-0500","msg":"Received frame message","camera":"cam-1734677771","frame":35,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.791-0500","msg":"Saved frame","camera":"cam-1734677771","frame":34,"file":"frames\\cam-1734677771\\frame_00034_20241220_015612.744.jpg","processing_time":"25.7278ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.792-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":35,"timestamp":"2024-12-20T01:56:12.788-0500","queue_size":1,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.793-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":34,"processing_time":"25.7278ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.832-0500","msg":"Saved frame","camera":"cam-1734677771","frame":35,"file":"frames\\cam-1734677771\\frame_00035_20241220_015612.788.jpg","processing_time":"38.2869ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.835-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":35,"processing_time":"38.2869ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.843-0500","msg":"Received frame message","camera":"cam-1734677771","frame":36,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.844-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":36,"timestamp":"2024-12-20T01:56:12.839-0500","queue_size":0,"queue_capacity":100}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.876-0500","msg":"Saved frame","camera":"cam-1734677771","frame":36,"file":"frames\\cam-1734677771\\frame_00036_20241220_015612.839.jpg","processing_time":"31.8967ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.878-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":36,"processing_time":"31.8967ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.910-0500","msg":"Received frame message","camera":"cam-1734677771","frame":37,"data_length":18192}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.911-0500","msg":"Queued frame for processing","camera":"cam-1734677771","frame":37,"timestamp":"2024-12-20T01:56:12.891-0500","queue_size":0,"queue_capacity":100}
+{"level":"info","timestamp":"2024-12-20T01:56:12.911-0500","msg":"Camera disconnected","id":"cam-1734677771"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.938-0500","msg":"Saved frame","camera":"cam-1734677771","frame":37,"file":"frames\\cam-1734677771\\frame_00037_20241220_015612.891.jpg","processing_time":"26.35ms"}
+{"level":"debug","timestamp":"2024-12-20T01:56:12.940-0500","msg":"Frame processed successfully","camera":"cam-1734677771","frame":37,"processing_time":"26.35ms"}
+{"level":"info","timestamp":"2024-12-20T01:56:13.085-0500","msg":"Video created successfully","output":"frames\\videos\\cam-1734677771_20241220_015612.mp4","frame_count":30}
+{"level":"info","timestamp":"2024-12-20T01:56:13.086-0500","msg":"Video consolidation complete","camera":"cam-1734677771","video_path":"frames\\videos\\cam-1734677771_20241220_015612.mp4","processed_frames":30}
