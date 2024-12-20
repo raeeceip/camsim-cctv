@@ -1,25 +1,29 @@
+# CCTV System Configuration
 log_level: "debug"
 
 server:
   host: "localhost"
   port: 8080
+  signal_port: 8081
+  stream_port: 8082
   ssl:
-    enabled: true
+    enabled: false
     cert_file: "certs/cert.pem"
     key_file: "certs/key.pem"
 
 stream:
-  signal_address: "localhost:8081"
-  stream_address: "localhost:8082"
   video_codec: "h264"
   video_bitrate: 2000
   framerate: 30
   width: 1280
   height: 720
+  options:
+    preset: "ultrafast"
+    tune: "zerolatency"
 
 storage:
   output_dir: "./frames"
   save_frames: true
-  max_file_size: 104857600
-  max_disk_usage: 1073741824
-  max_frame_count: 1000
+  max_frames: 1000
+  max_disk_usage: 1073741824 # 1GB
+  retention_hours: 24

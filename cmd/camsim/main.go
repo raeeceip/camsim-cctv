@@ -32,6 +32,16 @@ type CameraSimulator struct {
 }
 
 func NewCameraSimulator(id, signalAddr string, width, height int) *CameraSimulator {
+	if id == "" {
+		id = fmt.Sprintf("cam-%d", time.Now().UnixNano())
+	}
+	if width <= 0 {
+		width = 640
+	}
+	if height <= 0 {
+		height = 480
+	}
+
 	return &CameraSimulator{
 		id:         id,
 		signalAddr: signalAddr,
@@ -42,10 +52,12 @@ func NewCameraSimulator(id, signalAddr string, width, height int) *CameraSimulat
 }
 
 func (cs *CameraSimulator) Connect() error {
+	log.Printf("Attempting to connect to %s...", cs.signalAddr)
+
 	dialer := websocket.Dialer{
 		HandshakeTimeout: 10 * time.Second,
-		ReadBufferSize:   1024 * 1024, // 1MB
-		WriteBufferSize:  1024 * 1024, // 1MB
+		ReadBufferSize:   1024 * 1024,
+		WriteBufferSize:  1024 * 1024,
 	}
 
 	conn, _, err := dialer.Dial(cs.signalAddr, nil)
@@ -54,52 +66,69 @@ func (cs *CameraSimulator) Connect() error {
 	}
 	cs.conn = conn
 
-	// Set up connection handlers
-	cs.conn.SetReadLimit(32 * 1024 * 1024) // 32MB max message size
-	cs.conn.SetPongHandler(func(string) error {
-		cs.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	conn.SetReadLimit(32 * 1024 * 1024)
+	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	conn.SetPongHandler(func(string) error {
+		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 		return nil
 	})
 
+	log.Printf("Connected successfully to %s", cs.signalAddr)
 	return nil
 }
 
-func (cs *CameraSimulator) handlePing(ctx context.Context) {
+func (cs *CameraSimulator) handlePing(ctx context.Context) error {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return nil
 		case <-ticker.C:
 			if err := cs.conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(10*time.Second)); err != nil {
-				log.Printf("Failed to write ping: %v", err)
-				return
+				return fmt.Errorf("failed to write ping: %w", err)
 			}
 		}
 	}
 }
 
 func (cs *CameraSimulator) Start(ctx context.Context) error {
-	// Start ping handler
-	go cs.handlePing(ctx)
+	if cs.conn == nil {
+		return fmt.Errorf("not connected")
+	}
 
-	// Start message reader to handle server responses
+	// Start ping handler
+	cs.wg.Add(1)
 	go func() {
+		defer cs.wg.Done()
+		if err := cs.handlePing(ctx); err != nil {
+			log.Printf("Ping handler error: %v", err)
+		}
+	}()
+
+	// Start message reader
+	cs.wg.Add(1)
+	go func() {
+		defer cs.wg.Done()
 		for {
-			_, _, err := cs.conn.ReadMessage()
-			if err != nil {
-				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
-					log.Printf("Read error: %v", err)
-				}
+			select {
+			case <-ctx.Done():
 				return
+			default:
+				_, _, err := cs.conn.ReadMessage()
+				if err != nil {
+					if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
+						log.Printf("Read error: %v", err)
+					}
+					return
+				}
 			}
 		}
 	}()
 
 	// Start frame generator
-	ticker := time.NewTicker(time.Second / 30) // 30 FPS
+	ticker := time.NewTicker(time.Second / 30)
 	defer ticker.Stop()
 
 	for {
@@ -120,6 +149,10 @@ func (cs *CameraSimulator) Start(ctx context.Context) error {
 }
 
 func (cs *CameraSimulator) sendFrame() error {
+	if cs.conn == nil {
+		return fmt.Errorf("not connected")
+	}
+
 	// Generate frame
 	img, pattern := cs.generateFrame()
 
@@ -151,6 +184,10 @@ func (cs *CameraSimulator) sendFrame() error {
 	// Write message with deadline
 	cs.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 	if err := cs.conn.WriteJSON(msg); err != nil {
+		if closeErr := cs.conn.WriteMessage(websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")); closeErr != nil {
+			log.Printf("Error sending close message: %v", closeErr)
+		}
 		return fmt.Errorf("failed to send frame: %w", err)
 	}
 
@@ -225,7 +262,7 @@ func (cs *CameraSimulator) generateFrame() (*image.RGBA, string) {
 		}
 	}
 
-	// Add timestamp and frame number
+	// Add timestamp
 	cs.addTimestamp(img)
 	return img, pattern
 }
@@ -238,20 +275,22 @@ func (cs *CameraSimulator) addTimestamp(img *image.RGBA) {
 		image.Point{},
 		draw.Over)
 
-	//log creation
 	log.Printf("Timestamp: %s", timestamp)
-
 }
 
 func (cs *CameraSimulator) Stop() {
 	log.Println("Stopping camera simulator...")
 	close(cs.done)
+
 	if cs.conn != nil {
-		cs.conn.WriteMessage(websocket.CloseMessage,
-			websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-		time.Sleep(time.Second) // Give time for close message to be sent
+		if err := cs.conn.WriteMessage(websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")); err != nil {
+			log.Printf("Error sending close message: %v", err)
+		}
+		time.Sleep(time.Second)
 		cs.conn.Close()
 	}
+
 	cs.wg.Wait()
 	log.Println("Camera simulator stopped")
 }
@@ -265,8 +304,8 @@ func main() {
 	flag.Parse()
 
 	log.Printf("Starting camera simulator with ID: %s", *id)
-	log.Printf("Connecting to: %s", *addr)
 	log.Printf("Resolution: %dx%d", *width, *height)
+	log.Printf("Server address: %s", *addr)
 
 	// Create context with cancellation
 	ctx, cancel := context.WithCancel(context.Background())
@@ -289,10 +328,10 @@ func main() {
 	}()
 
 	if err := sim.Start(ctx); err != nil {
-		log.Fatalf("Failed to start streaming: %v", err)
+		if err.Error() != "not connected" {
+			log.Printf("Failed to start streaming: %v", err)
+		}
 	}
 
-	// Wait for completion
-	sim.wg.Wait()
-	log.Println("Camera simulator shut down successfully")
+	sim.Stop()
 }

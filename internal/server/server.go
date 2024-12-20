@@ -1,3 +1,4 @@
+// File: internal/server/server.go
 package server
 
 import (
@@ -13,12 +14,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.uber.org/zap"
-
 	"github.com/raeeceip/cctv/internal/config"
 	"github.com/raeeceip/cctv/internal/processor"
+	"github.com/raeeceip/cctv/pkg/logger"
+	"go.uber.org/zap"
 )
-// i swear this was working an hour ago 
+
 type CameraMessage struct {
 	Type     string    `json:"type"`
 	Data     string    `json:"data"`
@@ -30,20 +31,28 @@ type CameraMessage struct {
 
 type Server struct {
 	router      *gin.Engine
-	logger      *zap.Logger
+	logger      *logger.Logger
 	config      *config.Config
-	upgrader    websocket.Upgrader
 	processor   *processor.FrameProcessor
+	upgrader    websocket.Upgrader
 	connections sync.Map
+	shutdown    chan struct{}
 }
 
-func New(cfg *config.Config, logger *zap.Logger) (*Server, error) {
+func New(cfg *config.Config, log *logger.Logger) (*Server, error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("config cannot be nil")
+	}
+	if log == nil {
+		return nil, fmt.Errorf("logger cannot be nil")
+	}
+
 	// Ensure output directory exists
 	if err := os.MkdirAll(cfg.Storage.OutputDir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create output directory: %w", err)
 	}
 
-	// Initialize processor
+	// Initialize processor with configuration
 	proc, err := processor.NewFrameProcessor(processor.ProcessorConfig{
 		OutputDir:       cfg.Storage.OutputDir,
 		MaxFrames:       cfg.Storage.MaxFrames,
@@ -51,68 +60,75 @@ func New(cfg *config.Config, logger *zap.Logger) (*Server, error) {
 		BufferSize:      100,
 		VideoInterval:   10 * time.Second,
 		DeleteOriginals: false,
-	}, logger)
+	}, log)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create processor: %w", err)
 	}
 
-	// Start the processor
-	if err := proc.Start(context.Background()); err != nil {
-		return nil, fmt.Errorf("failed to start processor: %w", err)
-	}
-
+	// Initialize server
 	server := &Server{
 		router:    gin.Default(),
-		logger:    logger,
+		logger:    log,
 		config:    cfg,
 		processor: proc,
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				return true
 			},
+			ReadBufferSize:  1024 * 1024, // 1MB
+			WriteBufferSize: 1024 * 1024, // 1MB
 		},
+		shutdown: make(chan struct{}),
 	}
 
+	// Setup routes
 	server.setupRoutes()
 	return server, nil
 }
 
 func (s *Server) handleCameraConnection(cameraID string, conn *websocket.Conn) {
-	s.logger.Info("starting camera connection handler",
+	s.logger.Info("Starting camera connection handler",
 		zap.String("camera_id", cameraID))
 
 	defer func() {
 		conn.Close()
 		s.connections.Delete(cameraID)
-		s.logger.Info("camera disconnected", zap.String("id", cameraID))
+		s.logger.Info("Camera disconnected", zap.String("id", cameraID))
 	}()
+
+	// Set up connection parameters
+	conn.SetReadLimit(32 * 1024 * 1024) // 32MB
+	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	conn.SetPongHandler(func(string) error {
+		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		return nil
+	})
 
 	// Create camera-specific directory
 	cameraDir := filepath.Join(s.config.Storage.OutputDir, cameraID)
 	if err := os.MkdirAll(cameraDir, 0755); err != nil {
-		s.logger.Error("failed to create camera directory",
+		s.logger.Error("Failed to create camera directory",
 			zap.String("camera", cameraID),
 			zap.Error(err))
 		return
 	}
 
-	s.logger.Info("created camera directory",
-		zap.String("camera", cameraID),
-		zap.String("path", cameraDir))
+	// Start ping handler
+	go s.handlePing(conn, cameraID)
 
 	for {
 		var msg CameraMessage
 		err := conn.ReadJSON(&msg)
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				s.logger.Error("websocket read error",
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
+				s.logger.Error("Websocket read error",
 					zap.String("camera", cameraID),
 					zap.Error(err))
 			}
 			return
 		}
 
-		s.logger.Debug("received frame message",
+		s.logger.Debug("Received frame message",
 			zap.String("camera", cameraID),
 			zap.Uint64("frame", msg.FrameNum),
 			zap.Int("data_length", len(msg.Data)))
@@ -120,31 +136,51 @@ func (s *Server) handleCameraConnection(cameraID string, conn *websocket.Conn) {
 		// Decode base64 frame data
 		frameData, err := base64.StdEncoding.DecodeString(msg.Data)
 		if err != nil {
-			s.logger.Error("failed to decode frame data",
+			s.logger.Error("Failed to decode frame data",
 				zap.String("camera", cameraID),
 				zap.Error(err))
 			continue
 		}
 
-		s.logger.Debug("decoded frame data",
-			zap.String("camera", cameraID),
-			zap.Uint64("frame", msg.FrameNum),
-			zap.Int("decoded_size", len(frameData)))
-
 		// Process frame
-		s.processor.ProcessFrame(processor.FrameData{
-			CameraID:  cameraID,
-			Data:      frameData,
-			Timestamp: msg.Time,
-			Number:    msg.FrameNum,
-		})
+		if s.processor != nil {
+			s.processor.ProcessFrame(processor.FrameData{
+				CameraID:  cameraID,
+				Data:      frameData,
+				Timestamp: msg.Time,
+				Number:    msg.FrameNum,
+			})
 
-		// Log every 30th frame
-		if msg.FrameNum%30 == 0 {
-			s.logger.Info("processed frame",
-				zap.String("camera", cameraID),
-				zap.Uint64("frame", msg.FrameNum),
-				zap.String("pattern", msg.Pattern))
+			// Log every 30th frame
+			if msg.FrameNum%30 == 0 {
+				s.logger.Info("Processed frame",
+					zap.String("camera", cameraID),
+					zap.Uint64("frame", msg.FrameNum),
+					zap.String("pattern", msg.Pattern))
+			}
+		} else {
+			s.logger.Error("Frame processor is nil",
+				zap.String("camera", cameraID))
+			return
+		}
+	}
+}
+
+func (s *Server) handlePing(conn *websocket.Conn, cameraID string) {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			if err := conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(10*time.Second)); err != nil {
+				s.logger.Error("Failed to write ping",
+					zap.String("camera", cameraID),
+					zap.Error(err))
+				return
+			}
+		case <-s.shutdown:
+			return
 		}
 	}
 }
@@ -154,13 +190,13 @@ func (s *Server) setupRoutes() {
 	s.router.GET("/camera/connect", func(c *gin.Context) {
 		conn, err := s.upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
-			s.logger.Error("websocket upgrade failed", zap.Error(err))
+			s.logger.Error("Websocket upgrade failed", zap.Error(err))
 			return
 		}
 
 		cameraID := fmt.Sprintf("cam-%d", time.Now().Unix())
 		s.connections.Store(cameraID, conn)
-		s.logger.Info("camera connected", zap.String("id", cameraID))
+		s.logger.Info("Camera connected", zap.String("id", cameraID))
 
 		// Handle camera connection in a goroutine
 		go s.handleCameraConnection(cameraID, conn)
@@ -215,6 +251,11 @@ func (s *Server) setupRoutes() {
 }
 
 func (s *Server) Start(ctx context.Context) error {
+	// Start the processor if it hasn't been started
+	if err := s.processor.Start(ctx); err != nil {
+		return fmt.Errorf("failed to start processor: %w", err)
+	}
+
 	srv := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", s.config.Server.Host, s.config.Server.Port),
 		Handler: s.router,
@@ -223,11 +264,18 @@ func (s *Server) Start(ctx context.Context) error {
 	// Handle graceful shutdown
 	go func() {
 		<-ctx.Done()
-		s.logger.Info("shutting down server...")
+		s.logger.Info("Shutting down server...")
+
+		// Signal ping handlers to stop
+		close(s.shutdown)
 
 		// Close all connections
 		s.connections.Range(func(key, value interface{}) bool {
 			if conn, ok := value.(*websocket.Conn); ok {
+				conn.WriteMessage(
+					websocket.CloseMessage,
+					websocket.FormatCloseMessage(websocket.CloseNormalClosure, "server shutdown"),
+				)
 				conn.Close()
 			}
 			return true
@@ -237,14 +285,21 @@ func (s *Server) Start(ctx context.Context) error {
 		defer cancel()
 
 		if err := srv.Shutdown(shutdownCtx); err != nil {
-			s.logger.Error("server shutdown failed", zap.Error(err))
+			s.logger.Error("Server shutdown failed", zap.Error(err))
 		}
 	}()
 
-	s.logger.Info("server starting", zap.String("addr", srv.Addr))
+	s.logger.Info("Server starting",
+		zap.String("address", srv.Addr))
+
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		return fmt.Errorf("server error: %w", err)
 	}
 
 	return nil
+}
+
+func (s *Server) Stop() {
+	close(s.shutdown)
+	s.processor.Stop()
 }

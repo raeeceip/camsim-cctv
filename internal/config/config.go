@@ -1,8 +1,9 @@
-// File: internal/config/config.go
 package config
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/viper"
 )
@@ -22,17 +23,14 @@ type ServerConfig struct {
 }
 
 type StreamConfig struct {
-	SignalAddress  string            `mapstructure:"signal_address"`  // WebSocket signaling address
-	StreamAddress  string            `mapstructure:"stream_address"`  // HTTP stream addressa
-	CameraURL      string            `mapstructure:"camera_url"`      // URL of the camera stream (RTSP/HTTP)
-	CameraUsername string            `mapstructure:"camera_username"` // Camera authentication username
-	CameraPassword string            `mapstructure:"camera_password"` // Camera authentication password
-	VideoCodec     string            `mapstructure:"video_codec"`     // Video codec to use (e.g., h264)
-	VideoBitrate   int               `mapstructure:"video_bitrate"`   // Video bitrate in kbps
-	Framerate      int               `mapstructure:"framerate"`       // Target framerate
-	Width          int               `mapstructure:"width"`           // Video width
-	Height         int               `mapstructure:"height"`          // Video height
-	Options        map[string]string `mapstructure:"options"`         // Additional camera options
+	SignalAddress string            `mapstructure:"signal_address"`
+	StreamAddress string            `mapstructure:"stream_address"`
+	VideoCodec    string            `mapstructure:"video_codec"`
+	VideoBitrate  int               `mapstructure:"video_bitrate"`
+	Framerate     int               `mapstructure:"framerate"`
+	Width         int               `mapstructure:"width"`
+	Height        int               `mapstructure:"height"`
+	Options       map[string]string `mapstructure:"options"`
 }
 
 type StorageConfig struct {
@@ -44,10 +42,42 @@ type StorageConfig struct {
 }
 
 func Load() (*Config, error) {
+	// Set default configuration values
+	setDefaults()
+
+	// Set configuration file paths
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(".")
+	viper.AddConfigPath("./config")
+
+	// Try to read configuration file
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			return nil, fmt.Errorf("failed to read config file: %w", err)
+		}
+	}
+
+	var config Config
+	if err := viper.Unmarshal(&config); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+
+	// Validate and ensure required directories exist
+	if err := validateConfig(&config); err != nil {
+		return nil, fmt.Errorf("invalid configuration: %w", err)
+	}
+
+	return &config, nil
+}
+
+func setDefaults() {
+	// Server defaults
 	viper.SetDefault("log_level", "info")
 	viper.SetDefault("server.port", 8080)
 	viper.SetDefault("server.host", "localhost")
 	viper.SetDefault("server.signal_port", 8081)
+	viper.SetDefault("server.stream_port", 8082)
 
 	// Stream defaults
 	viper.SetDefault("stream.video_codec", "h264")
@@ -56,26 +86,71 @@ func Load() (*Config, error) {
 	viper.SetDefault("stream.width", 1280)
 	viper.SetDefault("stream.height", 720)
 
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(".")
-	viper.AddConfigPath("./config")
+	// Storage defaults
+	viper.SetDefault("storage.output_dir", "frames")
+	viper.SetDefault("storage.save_frames", true)
+	viper.SetDefault("storage.max_frames", 1000)
+	viper.SetDefault("storage.max_disk_usage", 1024*1024*1024) // 1GB
+	viper.SetDefault("storage.retention_hours", 24)
+}
 
-	if err := viper.ReadInConfig(); err != nil {
-		return nil, err
+func validateConfig(cfg *Config) error {
+	// Validate log level
+	validLogLevels := map[string]bool{
+		"debug": true,
+		"info":  true,
+		"warn":  true,
+		"error": true,
+	}
+	if !validLogLevels[cfg.LogLevel] {
+		cfg.LogLevel = "info" // Set default if invalid
 	}
 
-	var config Config
-	if err := viper.Unmarshal(&config); err != nil {
-		return nil, err
+	// Ensure valid server configuration
+	if cfg.Server.Port <= 0 {
+		cfg.Server.Port = 8080
+	}
+	if cfg.Server.Host == "" {
+		cfg.Server.Host = "localhost"
 	}
 
-	if config.Stream.SignalAddress == "" {
-		config.Stream.SignalAddress = fmt.Sprintf("%s:8081", config.Server.Host)
+	// Ensure valid stream configuration
+	if cfg.Stream.VideoBitrate <= 0 {
+		cfg.Stream.VideoBitrate = 2000
 	}
-	if config.Stream.StreamAddress == "" {
-		config.Stream.StreamAddress = fmt.Sprintf("%s:8082", config.Server.Host)
+	if cfg.Stream.Framerate <= 0 {
+		cfg.Stream.Framerate = 30
+	}
+	if cfg.Stream.Width <= 0 {
+		cfg.Stream.Width = 1280
+	}
+	if cfg.Stream.Height <= 0 {
+		cfg.Stream.Height = 720
 	}
 
-	return &config, nil
+	// Ensure valid storage configuration
+	if cfg.Storage.OutputDir == "" {
+		cfg.Storage.OutputDir = "frames"
+	}
+	if cfg.Storage.MaxFrames <= 0 {
+		cfg.Storage.MaxFrames = 1000
+	}
+	if cfg.Storage.RetentionHours <= 0 {
+		cfg.Storage.RetentionHours = 24
+	}
+
+	// Create required directories
+	dirs := []string{
+		cfg.Storage.OutputDir,
+		filepath.Join(cfg.Storage.OutputDir, "videos"),
+		"logs",
+	}
+
+	for _, dir := range dirs {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return fmt.Errorf("failed to create directory %s: %w", dir, err)
+		}
+	}
+
+	return nil
 }
