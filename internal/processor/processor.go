@@ -137,7 +137,7 @@ func (fp *FrameProcessor) saveFrame(frame FrameData) error {
 
 	// Save frame
 	filename := filepath.Join(cameraDir,
-		fmt.Sprintf("frame_%d_%s.jpg",
+		fmt.Sprintf("frame_%05d_%s.jpg",
 			frame.Number,
 			frame.Timestamp.Format("20060102_150405.000")))
 
@@ -234,10 +234,21 @@ func (fp *FrameProcessor) createVideo(frames []string, outputPath string) error 
 		return fmt.Errorf("no frames to process")
 	}
 
+	// Create a temporary file with the list of frames
+	listFile := filepath.Join(filepath.Dir(frames[0]), "frames.txt")
+	var frameList string
+	for _, frame := range frames {
+		frameList += fmt.Sprintf("file '%s'\nduration 0.033333333\n", filepath.ToSlash(frame))
+	}
+	if err := os.WriteFile(listFile, []byte(frameList), 0644); err != nil {
+		return fmt.Errorf("failed to create frame list: %w", err)
+	}
+	defer os.Remove(listFile)
+
 	args := []string{
-		"-framerate", "30",
-		"-pattern_type", "glob",
-		"-i", filepath.ToSlash(filepath.Join(filepath.Dir(frames[0]), "frame_*.jpg")),
+		"-f", "concat",
+		"-safe", "0",
+		"-i", listFile,
 		"-c:v", "libx264",
 		"-pix_fmt", "yuv420p",
 		"-y",
