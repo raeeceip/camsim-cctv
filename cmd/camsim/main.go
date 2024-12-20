@@ -42,17 +42,132 @@ func NewCameraSimulator(id, signalAddr string, width, height int) *CameraSimulat
 }
 
 func (cs *CameraSimulator) Connect() error {
-	conn, _, err := websocket.DefaultDialer.Dial(cs.signalAddr, nil)
+	dialer := websocket.Dialer{
+		HandshakeTimeout: 10 * time.Second,
+		ReadBufferSize:   1024 * 1024, // 1MB
+		WriteBufferSize:  1024 * 1024, // 1MB
+	}
+
+	conn, _, err := dialer.Dial(cs.signalAddr, nil)
 	if err != nil {
 		return fmt.Errorf("websocket connection failed: %w", err)
 	}
 	cs.conn = conn
+
+	// Set up connection handlers
+	cs.conn.SetReadLimit(32 * 1024 * 1024) // 32MB max message size
+	cs.conn.SetPongHandler(func(string) error {
+		cs.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		return nil
+	})
+
+	return nil
+}
+
+func (cs *CameraSimulator) handlePing(ctx context.Context) {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if err := cs.conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(10*time.Second)); err != nil {
+				log.Printf("Failed to write ping: %v", err)
+				return
+			}
+		}
+	}
+}
+
+func (cs *CameraSimulator) Start(ctx context.Context) error {
+	// Start ping handler
+	go cs.handlePing(ctx)
+
+	// Start message reader to handle server responses
+	go func() {
+		for {
+			_, _, err := cs.conn.ReadMessage()
+			if err != nil {
+				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
+					log.Printf("Read error: %v", err)
+				}
+				return
+			}
+		}
+	}()
+
+	// Start frame generator
+	ticker := time.NewTicker(time.Second / 30) // 30 FPS
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			log.Println("Context cancelled, stopping frame generation")
+			return nil
+		case <-cs.done:
+			log.Println("Received stop signal, stopping frame generation")
+			return nil
+		case <-ticker.C:
+			if err := cs.sendFrame(); err != nil {
+				log.Printf("Failed to send frame: %v", err)
+				return err
+			}
+		}
+	}
+}
+
+func (cs *CameraSimulator) sendFrame() error {
+	// Generate frame
+	img, pattern := cs.generateFrame()
+
+	// Encode frame
+	var buf bytes.Buffer
+	if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: 90}); err != nil {
+		return fmt.Errorf("jpeg encoding failed: %w", err)
+	}
+
+	frameData := base64.StdEncoding.EncodeToString(buf.Bytes())
+
+	// Create message
+	msg := struct {
+		Type     string    `json:"type"`
+		Data     string    `json:"data"`
+		Camera   string    `json:"camera"`
+		Time     time.Time `json:"time"`
+		Pattern  string    `json:"pattern"`
+		FrameNum uint64    `json:"frame_num"`
+	}{
+		Type:     "frame",
+		Data:     frameData,
+		Camera:   cs.id,
+		Time:     time.Now(),
+		Pattern:  pattern,
+		FrameNum: cs.frameCount + 1,
+	}
+
+	// Write message with deadline
+	cs.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+	if err := cs.conn.WriteJSON(msg); err != nil {
+		return fmt.Errorf("failed to send frame: %w", err)
+	}
+
+	cs.frameCount++
+	if cs.frameCount%30 == 0 {
+		log.Printf("Sent frame %d (Pattern: %s)", cs.frameCount, pattern)
+	}
+
 	return nil
 }
 
 func (cs *CameraSimulator) generateFrame() (*image.RGBA, string) {
 	img := image.NewRGBA(image.Rect(0, 0, cs.width, cs.height))
 	pattern := ""
+
+	// Fill background with dark gray
+	draw.Draw(img, img.Bounds(), &image.Uniform{color.RGBA{40, 40, 40, 255}}, image.Point{}, draw.Src)
 
 	// Choose pattern based on time
 	switch (cs.frameCount / 150) % 4 {
@@ -69,11 +184,13 @@ func (cs *CameraSimulator) generateFrame() (*image.RGBA, string) {
 		pattern = "Sine Wave"
 		offset := float64(cs.frameCount) * 0.1
 		for x := 0; x < cs.width; x++ {
+			wave := math.Sin(float64(x)*0.05 + offset)
+			mid := float64(cs.height) / 2
+			pos := mid + wave*50
+
+			// Draw thick line
 			for y := 0; y < cs.height; y++ {
-				wave := math.Sin(float64(x)*0.05 + offset)
-				mid := float64(cs.height) / 2
-				pos := mid + wave*50
-				if math.Abs(float64(y)-pos) < 2 {
+				if math.Abs(float64(y)-pos) < 3 {
 					img.Set(x, y, color.RGBA{255, 255, 255, 255})
 				}
 			}
@@ -108,104 +225,54 @@ func (cs *CameraSimulator) generateFrame() (*image.RGBA, string) {
 		}
 	}
 
-	// Add timestamp
+	// Add timestamp and frame number
 	cs.addTimestamp(img)
 	return img, pattern
 }
 
 func (cs *CameraSimulator) addTimestamp(img *image.RGBA) {
-	text := fmt.Sprintf("Frame: %d | Time: %s", cs.frameCount, time.Now().Format("15:04:05"))
-	col := color.RGBA{255, 255, 255, 255} // White color for text
-	point := image.Point{10, 10}
-	addLabel(img, point, text, col)
-}
+	timestamp := fmt.Sprintf("Frame: %d | Time: %s", cs.frameCount, time.Now().Format("15:04:05"))
+	draw.Draw(img,
+		image.Rect(10, 10, 300, 40),
+		&image.Uniform{color.RGBA{0, 0, 0, 255}},
+		image.Point{},
+		draw.Over)
 
-func addLabel(img *image.RGBA, pt image.Point, label string, col color.Color) {
-	for i := 0; i < len(label); i++ {
-		draw.Draw(img, image.Rect(pt.X+i*7, pt.Y, pt.X+(i+1)*7, pt.Y+10), &image.Uniform{col}, image.Point{}, draw.Over)
-	}
-}
+	//log creation
+	log.Printf("Timestamp: %s", timestamp)
 
-func (cs *CameraSimulator) encodeFrame(img *image.RGBA) (string, error) {
-	var buf bytes.Buffer
-	err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: 90})
-	if err != nil {
-		return "", fmt.Errorf("jpeg encoding failed: %w", err)
-	}
-	return base64.StdEncoding.EncodeToString(buf.Bytes()), nil
-}
-
-func (cs *CameraSimulator) Start(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second / 30) // 30 FPS
-	defer ticker.Stop()
-
-	cs.wg.Add(1)
-	go func() {
-		defer cs.wg.Done()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				img, pattern := cs.generateFrame()
-				frameData, err := cs.encodeFrame(img)
-				if err != nil {
-					log.Printf("Frame encoding failed: %v", err)
-					continue
-				}
-
-				msg := struct {
-					Type     string    `json:"type"`
-					Data     string    `json:"data"`
-					Camera   string    `json:"camera"`
-					Time     time.Time `json:"time"`
-					Pattern  string    `json:"pattern"`
-					FrameNum uint64    `json:"frame_num"`
-				}{
-					Type:     "frame",
-					Data:     frameData,
-					Camera:   cs.id,
-					Time:     time.Now(),
-					Pattern:  pattern,
-					FrameNum: cs.frameCount,
-				}
-
-				if err := cs.conn.WriteJSON(msg); err != nil {
-					log.Printf("Failed to send frame: %v", err)
-					return
-				}
-
-				cs.frameCount++
-				if cs.frameCount%30 == 0 {
-					log.Printf("Sent frame %d", cs.frameCount)
-				}
-			}
-		}
-	}()
-
-	return nil
 }
 
 func (cs *CameraSimulator) Stop() {
+	log.Println("Stopping camera simulator...")
 	close(cs.done)
 	if cs.conn != nil {
+		cs.conn.WriteMessage(websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+		time.Sleep(time.Second) // Give time for close message to be sent
 		cs.conn.Close()
 	}
 	cs.wg.Wait()
+	log.Println("Camera simulator stopped")
 }
 
 func main() {
+	// Parse command line flags
 	id := flag.String("id", "cam1", "Camera ID")
 	addr := flag.String("addr", "ws://localhost:8080/camera/connect", "Signal server address")
 	width := flag.Int("width", 640, "Frame width")
 	height := flag.Int("height", 480, "Frame height")
 	flag.Parse()
 
-	log.Printf("Starting video stream for camera %s", *id)
+	log.Printf("Starting camera simulator with ID: %s", *id)
+	log.Printf("Connecting to: %s", *addr)
+	log.Printf("Resolution: %dx%d", *width, *height)
 
+	// Create context with cancellation
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// Create and start simulator
 	sim := NewCameraSimulator(*id, *addr, *width, *height)
 	if err := sim.Connect(); err != nil {
 		log.Fatalf("Failed to connect: %v", err)
@@ -217,7 +284,7 @@ func main() {
 
 	go func() {
 		<-sigChan
-		log.Println("Shutting down...")
+		log.Println("Received interrupt signal, shutting down...")
 		cancel()
 	}()
 
@@ -225,5 +292,7 @@ func main() {
 		log.Fatalf("Failed to start streaming: %v", err)
 	}
 
+	// Wait for completion
 	sim.wg.Wait()
+	log.Println("Camera simulator shut down successfully")
 }
