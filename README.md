@@ -1,209 +1,207 @@
 # Enterprise CCTV Streaming System
 
-A robust, Go-based CCTV streaming system designed for enterprise surveillance integration. This system provides real-time video streaming capabilities with support for multiple camera protocols and enterprise-grade security features.
+A lightweight, Go-based CCTV streaming system with real-time frame processing and video consolidation capabilities. The system supports websocket-based camera connections, frame processing, and automatic video generation.
 
 ## Features
 
 ### Core Capabilities
-- Multi-protocol support (RTSP, ONVIF, MJPEG)
-- Real-time video streaming with configurable quality
-- Camera discovery and auto-configuration
-- Recording and playback functionality
-- Motion detection and event triggering
-- Health monitoring and alerting
 
-### Security
-- Role-based access control (RBAC)
-- Audit logging
-- End-to-end encryption
-- Token-based authentication
-- Session management
+- Real-time frame streaming over WebSocket
+- Automatic frame processing and storage
+- Video consolidation from captured frames
+- Configurable frame rates and quality settings
+- Health monitoring and metrics
+- Debug endpoints for system inspection
 
-### Integration
-- REST API for third-party integration
-- Webhook support for event notifications
-- Multiple storage backend support
-- LDAP/Active Directory integration
-- Metrics export for Prometheus
+### Technical Features
+
+- WebSocket-based camera connections with ping-pong keep-alive
+- Base64 frame encoding/decoding
+- JPEG image processing
+- FFmpeg video consolidation
+- Prometheus metrics export
+- Graceful shutdown handling
 
 ## Architecture
 
 ```
 ├── cmd/
-│   └── cctvserver/
-│       └── main.go           # Application entry point
+│   ├── cctvserver/
+│   │   └── main.go           # Server entry point
+│   └── camsim/
+│       └── main.go           # Camera simulator
 ├── internal/
-│   ├── auth/                 # Authentication & authorization
-│   │   ├── jwt.go
-│   │   └── rbac.go
-│   ├── camera/              # Camera management
-│   │   ├── discovery.go
-│   │   ├── onvif.go
-│   │   └── rtsp.go
-│   ├── storage/             # Video storage
-│   │   ├── local.go
-│   │   └── s3.go
-│   ├── streaming/           # Streaming logic
-│   │   ├── mjpeg.go
-│   │   └── webrtc.go
-│   └── monitoring/          # System monitoring
-│       ├── health.go
-│       └── metrics.go
+│   ├── config/              # Configuration management
+│   │   └── config.go
+│   ├── processor/           # Frame processing
+│   │   └── processor.go
+│   ├── server/             # WebSocket server
+│   │   └── server.go
+│   └── stream/             # Stream management
+│       └── stream.go
 ├── pkg/
-│   ├── api/                 # Public API
-│   │   └── v1/
-│   └── config/             # Configuration
-└── web/                    # Web interface
-    ├── static/
-    └── templates/
+│   ├── logger/             # Logging utilities
+│   │   └── logger.go
+│   └── metrics/            # Prometheus metrics
+│       └── metrics.go
+└── setup.sh               # Setup and build script
 ```
 
 ## Getting Started
 
 ### Prerequisites
-- Go 1.21 or higher
-- FFmpeg
-- PostgreSQL
-- Redis (for caching)
 
-### Installation
+- Go 1.21 or higher
+- FFmpeg (for video consolidation)
+- WSL or Git Bash (for Windows users)
+
+### Quick Start
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/yourusername/cctv-system.git
 cd cctv-system
 ```
 
-2. Install dependencies:
+2. Run the setup script:
+
 ```bash
-go mod tidy
+chmod +x setup.sh
+./setup.sh
 ```
 
-3. Configure the application:
+The setup script will:
+
+- Install required dependencies
+- Build both server and camera simulator
+- Generate SSL certificates
+- Start the system
+- Record and process frames
+- Generate video output
+
+### Manual Setup
+
+1. Build the applications:
+
 ```bash
-cp config.example.yaml config.yaml
-# Edit config.yaml with your settings
+go build -o bin/cctvserver cmd/cctvserver/main.go
+go build -o bin/camerasim cmd/camsim/main.go
 ```
 
-4. Run the application:
+2. Start the server:
+
 ```bash
-go run cmd/cctvserver/main.go
+./bin/cctvserver
+```
+
+3. Start the camera simulator:
+
+```bash
+./bin/camerasim -id cam1 -addr "ws://localhost:8080/camera/connect"
 ```
 
 ### Configuration
 
-The system can be configured through:
-- YAML configuration file
-- Environment variables
-- Command-line flags
+The system is configured through `config.yaml`:
 
-Example configuration:
 ```yaml
+log_level: "debug"
+
 server:
+  host: "localhost"
   port: 8080
-  host: localhost
+
+stream:
+  video_codec: "h264"
+  video_bitrate: 2000
+  framerate: 30
+  width: 1280
+  height: 720
 
 storage:
-  type: local
-  path: /var/lib/cctv
-  retention: 30d
-
-cameras:
-  discovery:
-    enabled: true
-    interval: 5m
-  protocols:
-    - rtsp
-    - onvif
-    - mjpeg
-
-security:
-  jwt:
-    secret: your-secret-key
-    expiry: 24h
-  ssl:
-    enabled: true
-    cert: /path/to/cert.pem
-    key: /path/to/key.pem
+  output_dir: "./frames"
+  save_frames: true
+  max_file_size: 104857600 # 100MB
+  max_disk_usage: 1073741824 # 1GB
+  max_frame_count: 1000
 ```
 
-## API Documentation
+## API Endpoints
 
-### Camera Management
+### Camera Connection
+
 ```http
-GET /api/v1/cameras           # List all cameras
-POST /api/v1/cameras          # Add new camera
-GET /api/v1/cameras/{id}      # Get camera details
-PUT /api/v1/cameras/{id}      # Update camera
-DELETE /api/v1/cameras/{id}   # Remove camera
+GET /camera/connect    # WebSocket endpoint for camera connections
 ```
 
-### Stream Management
+### Monitoring
+
 ```http
-GET /api/v1/streams           # List active streams
-POST /api/v1/streams          # Start new stream
-DELETE /api/v1/streams/{id}   # Stop stream
+GET /health           # Health check endpoint
+GET /metrics          # Prometheus metrics endpoint
+GET /debug/frames     # Debug endpoint for frame processing status
 ```
+
+## Frame Processing
+
+The system processes frames in the following steps:
+
+1. Camera connects via WebSocket
+2. Frames are sent as base64-encoded JPEG images
+3. Frames are decoded and saved to disk
+4. Frames are consolidated into video files
+5. Optional cleanup of processed frames
+
+## Camera Simulator
+
+The included camera simulator provides test functionality:
+
+- Generates test patterns (gradient, sine wave, checkerboard, moving circle)
+- Configurable resolution and frame rate
+- Automatic WebSocket reconnection
+- Frame counting and statistics
 
 ## Monitoring
 
 ### Health Checks
-The system provides health check endpoints:
+
 ```http
-GET /health           # Basic health check
-GET /health/detailed  # Detailed system status
+GET /health
+```
+
+Response:
+
+```json
+{
+	"status": "healthy",
+	"time": "2024-12-19T20:20:56Z"
+}
 ```
 
 ### Metrics
-Prometheus metrics are exposed at:
-```http
-GET /metrics
+
+The system exports Prometheus metrics for:
+
+- Frame processing rates
+- Processing latency
+- Error counts
+- Connection status
+
+## Development
+
+### Building
+
+```bash
+make build      # Build all components
+make run-server # Run the server
+make run-sim    # Run the simulator
 ```
 
-Key metrics include:
-- Stream latency
-- Camera uptime
-- Storage usage
-- Error rates
-- Request duration
+### Testing
 
-## Security Considerations
-
-### Authentication
-- JWT-based authentication
-- Support for API keys
-- OAuth2 integration capability
-
-### Authorization
-- Role-based access control
-- Resource-level permissions
-- IP whitelisting support
-
-## Production Deployment
-
-### Docker
-```dockerfile
-FROM golang:1.21-alpine
-WORKDIR /app
-COPY . .
-RUN go build -o cctvserver cmd/cctvserver/main.go
-EXPOSE 8080
-CMD ["./cctvserver"]
-```
-
-### Kubernetes
-Basic deployment manifest provided in `deploy/k8s/`.
-
-## Testing
-
-Run the test suite:
 ```bash
 go test ./...
-```
-
-Run with coverage:
-```bash
-go test -cover ./...
 ```
 
 ## Contributing
@@ -216,4 +214,9 @@ go test -cover ./...
 
 ## License
 
-[Your chosen license]
+Distributed under the MIT License. See `LICENSE` for more information.
+
+## Contact
+
+- Discord: [discord.com/guynamedchiso](https://discord.com/guynamedchiso)
+- Email: [ chiboguchisomu@gmail.com ](mailto: chiboguchisomu@gmail.com)
