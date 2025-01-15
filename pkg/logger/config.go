@@ -4,7 +4,7 @@ package logger
 // Config represents logger configuration
 type Config struct {
 	// Level is the minimum logging level (debug, info, warn, error)
-	Level string `mapstructure:"level"`
+	Level string
 
 	// OutputPath is the path where log files will be written
 	OutputPath string `mapstructure:"output_path"`

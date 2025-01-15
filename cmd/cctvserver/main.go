@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -27,23 +28,36 @@ func main() {
 
 	// Initialize enhanced logger
 	logConfig := logger.Config{
-		Level:         cfg.LogLevel,
-		OutputPath:    "logs/cctv.log",
-		MaxSize:       100,
-		MaxBackups:    3,
-		MaxAge:        7,
-		Compress:      true,
-		UseConsole:    true,
-		UseJSON:       cfg.LogLevel == "debug",
-		EnableUI:      true,
-		UIRefreshRate: 100,
+		OutputPath: "logs/cctv.log",
+		EnableUI:   true,
 	}
 
-	log, err := logger.NewLogger(logConfig.Level, logConfig.OutputPath)
+	log, err := logger.NewLogger(cfg.LogLevel, logConfig)
 	if err != nil {
 		panic("Failed to initialize logger: " + err.Error())
 	}
-	defer log.Close()
+
+	// Setup signal handling early
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
+
+	// Create a context that will be cancelled on signal
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// Handle shutdown signal
+	go func() {
+		sig := <-signalChan
+		log.Info("Received shutdown signal", zap.String("signal", sig.String()))
+		cancel()
+	}()
+
+	// Ensure proper cleanup
+	defer func() {
+		cancel() // Ensure context is cancelled
+		if err := log.Close(); err != nil {
+			fmt.Printf("Error closing logger: %v\n", err)
+		}
+	}()
 
 	// Start logger UI if enabled
 	if logConfig.EnableUI {
@@ -58,65 +72,42 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// Ensure required directories exist
-	requiredDirs := []string{
-		cfg.Storage.OutputDir,
-		"logs",
-		"frames",
-		"frames/videos",
-	}
-
-	for _, dir := range requiredDirs {
-		if err := os.MkdirAll(dir, 0755); err != nil {
-			log.Fatal("Failed to create required directory",
-				zap.String("directory", dir),
-				zap.Error(err))
-		}
-	}
-
-	log.Info("Starting CCTV System",
-		zap.String("version", Version),
-		zap.String("log_level", cfg.LogLevel),
-		zap.String("environment", gin.Mode()))
-
-	// Create context for graceful shutdown
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// Initialize and start server with the processor
+	// Initialize and start server
 	srv, err := server.New(cfg, log)
 	if err != nil {
 		log.Fatal("Failed to initialize server", zap.Error(err))
 	}
 
-	// Handle graceful shutdown
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-
+	// Start the server in a goroutine
+	serverErr := make(chan error, 1)
 	go func() {
-		sig := <-sigChan
-		log.Info("Received shutdown signal",
-			zap.String("signal", sig.String()))
-		cancel()
+		if err := srv.Start(ctx); err != nil {
+			serverErr <- err
+		}
 	}()
 
-	log.Info("System initialized successfully",
-		zap.String("server_address", cfg.Server.Host),
-		zap.Int("server_port", cfg.Server.Port))
-
-	// Start the server
-	if err := srv.Start(ctx); err != nil {
-		log.Fatal("Failed to start server", zap.Error(err))
+	// Wait for either server error or context cancellation
+	select {
+	case err := <-serverErr:
+		log.Error("Server error", zap.Error(err))
+	case <-ctx.Done():
+		log.Info("Context cancelled, shutting down...")
 	}
 
-	// Wait for graceful shutdown
-	<-ctx.Done()
-
-	// Allow some time for cleanup
-	time.Sleep(2 * time.Second)
+	// Perform graceful shutdown
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
 
 	// Stop the server
 	srv.Stop()
 
-	log.Info("System shutdown complete")
+	// Wait for shutdown to complete or timeout
+	select {
+	case <-shutdownCtx.Done():
+		log.Warn("Shutdown timed out")
+	case <-time.After(100 * time.Millisecond):
+		// Brief pause to allow final logs to be written
+	}
+
+	log.Info("Server shutdown complete")
 }

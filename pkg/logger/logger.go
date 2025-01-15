@@ -53,12 +53,13 @@ type LogEntry struct {
 	Level     LogLevel
 	Message   string
 	Timestamp time.Time
-	Fields    []zapcore.Field // Changed from zap.Field to zapcore.Field
+	Fields    []zapcore.Field
 }
 
 type Logger struct {
 	*zap.Logger
 	logChan     chan LogEntry
+	done        chan struct{}
 	uiProgram   *tea.Program
 	outputFile  *os.File
 	level       LogLevel
@@ -74,10 +75,10 @@ type UIModel struct {
 	termWidth   int
 	termHeight  int
 	logChan     chan LogEntry
+	done        chan struct{}
 	lastUpdated time.Time
 }
 
-// extractFieldValue extracts the actual value from a zap field
 func extractFieldValue(field zapcore.Field) interface{} {
 	switch field.Type {
 	case zapcore.StringType:
@@ -108,7 +109,6 @@ func extractFieldValue(field zapcore.Field) interface{} {
 	}
 }
 
-// formatFieldValue formats field values appropriately
 func formatFieldValue(value interface{}) string {
 	switch v := value.(type) {
 	case time.Time:
@@ -122,7 +122,6 @@ func formatFieldValue(value interface{}) string {
 	}
 }
 
-// formatFields formats zap fields for display with proper value extraction
 func formatFields(fields []zapcore.Field) string {
 	if len(fields) == 0 {
 		return ""
@@ -139,12 +138,12 @@ func formatFields(fields []zapcore.Field) string {
 	return result
 }
 
-func NewLogger(level string, outputPath string) (*Logger, error) {
-	if err := os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
+func NewLogger(level string, config Config) (*Logger, error) {
+	if err := os.MkdirAll(filepath.Dir(config.OutputPath), 0755); err != nil {
 		return nil, fmt.Errorf("failed to create log directory: %w", err)
 	}
 
-	f, err := os.OpenFile(outputPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(config.OutputPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open log file: %w", err)
 	}
@@ -163,33 +162,25 @@ func NewLogger(level string, outputPath string) (*Logger, error) {
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
 
-	// Create two cores with different configurations
-	fileCore := zapcore.NewCore(
-		zapcore.NewJSONEncoder(encoderConfig),
-		zapcore.AddSync(f),
-		zap.DebugLevel, // File gets all logs
+	core := zapcore.NewTee(
+		zapcore.NewCore(
+			zapcore.NewJSONEncoder(encoderConfig),
+			zapcore.AddSync(f),
+			zap.DebugLevel,
+		),
+		zapcore.NewCore(
+			zapcore.NewConsoleEncoder(encoderConfig),
+			zapcore.AddSync(os.Stdout),
+			zapcore.Level(parseLogLevel(level)),
+		),
 	)
-
-	// Console only gets important logs and uses a simpler format
-	consoleEncoderConfig := encoderConfig
-	consoleEncoderConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-		enc.AppendString(t.Format("15:04:05"))
-	}
-
-	consoleCore := zapcore.NewCore(
-		zapcore.NewConsoleEncoder(consoleEncoderConfig),
-		zapcore.AddSync(os.Stdout),
-		zapcore.Level(parseLogLevel(level)), // Console level from config
-	)
-
-	// Combine cores
-	core := zapcore.NewTee(fileCore, consoleCore)
 
 	zapLogger := zap.New(core)
 
 	return &Logger{
 		Logger:     zapLogger,
 		logChan:    make(chan LogEntry, 1000),
+		done:       make(chan struct{}),
 		outputFile: f,
 		level:      InfoLevel,
 	}, nil
@@ -255,7 +246,6 @@ func (l *Logger) Fatal(msg string, fields ...zap.Field) {
 	l.Logger.Fatal(msg, fields...)
 }
 
-// sendToUI updated to handle converted fields
 func (l *Logger) sendToUI(level LogLevel, msg string, fields ...zapcore.Field) {
 	l.mu.RLock()
 	if !l.initialized {
@@ -271,12 +261,13 @@ func (l *Logger) sendToUI(level LogLevel, msg string, fields ...zapcore.Field) {
 		Timestamp: time.Now(),
 		Fields:    fields,
 	}:
+	case <-l.done:
+		return
 	default:
 		// Channel is full, log will be dropped
 	}
 }
 
-// StartUI initializes and starts the Bubble Tea UI
 func (l *Logger) StartUI() error {
 	l.mu.Lock()
 	if l.initialized {
@@ -286,7 +277,7 @@ func (l *Logger) StartUI() error {
 	l.initialized = true
 	l.mu.Unlock()
 
-	model := NewUIModel(l.logChan)
+	model := NewUIModel(l.logChan, l.done)
 	program := tea.NewProgram(model)
 	l.uiProgram = program
 
@@ -299,8 +290,7 @@ func (l *Logger) StartUI() error {
 	return nil
 }
 
-// NewUIModel creates a new UI model
-func NewUIModel(logChan chan LogEntry) UIModel {
+func NewUIModel(logChan chan LogEntry, done chan struct{}) UIModel {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
@@ -309,29 +299,46 @@ func NewUIModel(logChan chan LogEntry) UIModel {
 		spinner:     s,
 		logs:        make([]string, 0),
 		logChan:     logChan,
+		done:        done,
 		lastUpdated: time.Now(),
 	}
 }
 
-// Init implements tea.Model
+// File: pkg/logger/logger.go
+
 func (m UIModel) Init() tea.Cmd {
-	return tea.Batch(m.spinner.Tick, m.waitForLogs)
-}
-
-// waitForLogs waits for new log entries
-func (m UIModel) waitForLogs() tea.Msg {
-	entry := <-m.logChan
-	return entry
-}
-
-// Update implements tea.Model
-func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var (
-		cmd  tea.Cmd
-		cmds []tea.Cmd
+	return tea.Batch(
+		m.spinner.Tick,
+		m.waitForLogs,
+		tea.EnterAltScreen,
 	)
+}
+
+func (m UIModel) waitForLogs() tea.Msg {
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
+	select {
+	case entry := <-m.logChan:
+		return entry
+	case <-m.done:
+		return tea.Quit
+	case <-ticker.C:
+		return tea.Tick(time.Millisecond*100, func(t time.Time) tea.Msg {
+			return t
+		})
+	}
+}
+
+func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		if msg.Type == tea.KeyCtrlC {
+			return m, tea.Quit
+		}
+
 	case tea.WindowSizeMsg:
 		if !m.ready {
 			m.viewport = viewport.New(msg.Width-2, msg.Height-4)
@@ -348,6 +355,9 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case LogEntry:
 		logLine := formatLogEntry(msg)
 		m.logs = append(m.logs, logLine)
+		if len(m.logs) > 1000 { // Prevent memory growth
+			m.logs = m.logs[len(m.logs)-1000:]
+		}
 		m.viewport.SetContent(joinLogs(m.logs))
 		m.viewport.GotoBottom()
 		cmds = append(cmds, m.waitForLogs)
@@ -356,15 +366,50 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var spinnerCmd tea.Cmd
 		m.spinner, spinnerCmd = m.spinner.Update(msg)
 		cmds = append(cmds, spinnerCmd)
+
+	case time.Time:
+		cmds = append(cmds, m.waitForLogs)
 	}
 
+	var cmd tea.Cmd
 	m.viewport, cmd = m.viewport.Update(msg)
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
 }
 
-// View implements tea.Model
+func (l *Logger) Close() error {
+	l.mu.Lock()
+	if l.done != nil {
+		close(l.done)
+	}
+	l.mu.Unlock()
+
+	// Wait for UI to cleanup with timeout
+	cleanup := make(chan struct{})
+	go func() {
+		if l.uiProgram != nil {
+			l.uiProgram.Kill()
+		}
+		close(cleanup)
+	}()
+
+	select {
+	case <-cleanup:
+	case <-time.After(1 * time.Second):
+		// Force cleanup after timeout
+	}
+
+	// Close log file
+	if l.outputFile != nil {
+		if err := l.outputFile.Close(); err != nil {
+			return fmt.Errorf("failed to close log file: %w", err)
+		}
+	}
+
+	return l.Logger.Sync()
+}
+
 func (m UIModel) View() string {
 	if !m.ready {
 		return "Initializing..."
@@ -380,7 +425,6 @@ func (m UIModel) View() string {
 	return lipgloss.JoinVertical(lipgloss.Left, header, body)
 }
 
-// formatLogEntry formats a log entry with appropriate styling
 func formatLogEntry(entry LogEntry) string {
 	timestamp := timestampStyle.Render(entry.Timestamp.Format("15:04:05.000"))
 	var levelStyle lipgloss.Style
@@ -411,7 +455,6 @@ func formatLogEntry(entry LogEntry) string {
 		fields)
 }
 
-// joinLogs joins multiple log entries with newlines
 func joinLogs(logs []string) string {
 	var result string
 	for i, log := range logs {
@@ -421,22 +464,4 @@ func joinLogs(logs []string) string {
 		}
 	}
 	return result
-}
-
-// Close implements io.Closer
-func (l *Logger) Close() error {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	if l.uiProgram != nil {
-		l.uiProgram.Kill()
-	}
-
-	if l.outputFile != nil {
-		if err := l.outputFile.Close(); err != nil {
-			return fmt.Errorf("failed to close log file: %w", err)
-		}
-	}
-
-	return l.Logger.Sync()
 }

@@ -3,7 +3,7 @@ log_level: "debug"
 
 server:
   host: "localhost"
-  port: 8080
+  port: 8081
   signal_port: 8081
   stream_port: 8082
   ssl:

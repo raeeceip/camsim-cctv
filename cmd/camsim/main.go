@@ -58,6 +58,7 @@ func (cs *CameraSimulator) saveVideo() error {
 	defer os.RemoveAll(tempDir)
 
 	// Save frames as JPEG files
+	// could be a utility function on its own later
 	for i, frame := range cs.frameBuffer {
 		framePath := filepath.Join(tempDir, fmt.Sprintf("frame_%05d.jpg", i))
 		f, err := os.Create(framePath)
@@ -106,15 +107,16 @@ func (cs *CameraSimulator) addFrameToBuffer(frame *image.RGBA) {
 	cs.frameBufferLock.Lock()
 	defer cs.frameBufferLock.Unlock()
 
-	cs.frameBuffer = append(cs.frameBuffer, frame)
+	// Create a copy of the frame
+	frameCopy := image.NewRGBA(frame.Bounds())
+	draw.Draw(frameCopy, frame.Bounds(), frame, frame.Bounds().Min, draw.Src)
+	cs.frameBuffer = append(cs.frameBuffer, frameCopy)
 
 	// Save video every 300 frames (10 seconds at 30fps)
 	if len(cs.frameBuffer) >= 300 {
-		go func() {
-			if err := cs.saveVideo(); err != nil {
-				log.Printf("Failed to save video: %v", err)
-			}
-		}()
+		if err := cs.saveVideo(); err != nil {
+			log.Printf("Failed to save video: %v", err)
+		}
 	}
 }
 
@@ -155,6 +157,7 @@ func (cs *CameraSimulator) Connect() error {
 
 	conn.SetReadLimit(32 * 1024 * 1024)
 	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+
 	conn.SetPongHandler(func(string) error {
 		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 		return nil
@@ -250,6 +253,9 @@ func (cs *CameraSimulator) sendFrame() error {
 	}
 
 	frameData := base64.StdEncoding.EncodeToString(buf.Bytes())
+
+	// Add frame to buffer for video creation
+	cs.addFrameToBuffer(img)
 
 	// Create message
 	msg := struct {
