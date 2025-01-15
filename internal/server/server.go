@@ -40,6 +40,12 @@ type Server struct {
 	shutdownOnce    sync.Once
 }
 
+type CameraHandler interface {
+	HandleCameraConnection(conn *websocket.Conn)
+	HandleDisconnect() error
+	ProcessFrame(data []byte) error
+}
+
 func New(cfg *config.Config, log *logger.Logger) (*Server, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("config cannot be nil")
