@@ -28,12 +28,13 @@ type FrameData struct {
 }
 
 type ProcessorConfig struct {
-	OutputDir       string        `json:"output_dir"`
-	MaxFrames       int           `json:"max_frames"`
-	RetentionTime   time.Duration `json:"retention_time"`
-	BufferSize      int           `json:"buffer_size"`
-	VideoInterval   time.Duration `json:"video_interval"`
-	DeleteOriginals bool          `json:"delete_originals"`
+	OutputDir          string        `json:"output_dir"`
+	MaxFrames          int           `json:"max_frames"`
+	RetentionTime      time.Duration `json:"retention_time"`
+	BufferSize         int           `json:"buffer_size"`
+	VideoInterval      time.Duration `json:"video_interval"`
+	DeleteOriginals    bool          `json:"delete_originals"`
+	VideoConsolidation bool          `json:"video_consolidation"`
 }
 
 type ProcessResult struct {
@@ -125,35 +126,23 @@ func (fp *FrameProcessor) testFFmpeg() error {
 	return nil
 }
 
-func (fp *FrameProcessor) ProcessFrame(frame FrameData) error {
-	if frame.CameraID == "" {
-		return fmt.Errorf("camera ID is required")
-	}
-
-	// Mark camera as active
-	fp.processingMap.Store(frame.CameraID, true)
-
-	select {
-	case fp.frameChan <- frame:
-		fp.logger.Debug("Queued frame for processing",
-			zap.String("camera", frame.CameraID),
-			zap.Uint64("frame", frame.Number),
-			zap.Time("timestamp", frame.Timestamp),
-			zap.Int("queue_size", len(fp.frameChan)),
-			zap.Int("queue_capacity", cap(fp.frameChan)))
-		return nil
-	default:
-		fp.metrics.RecordError()
-		return fmt.Errorf("frame processing queue full (capacity: %d)", cap(fp.frameChan))
-	}
-}
-
 func (fp *FrameProcessor) saveFrame(frame FrameData) ProcessResult {
 	startTime := time.Now()
 	result := ProcessResult{
 		CameraID:      frame.CameraID,
 		FrameNumber:   frame.Number,
 		ProcessedTime: startTime,
+	}
+
+	// Validate frame data
+	if len(frame.Data) == 0 {
+		result.Error = fmt.Errorf("empty frame data")
+		return result
+	}
+
+	if frame.CameraID == "" {
+		result.Error = fmt.Errorf("missing camera ID")
+		return result
 	}
 
 	// Create camera directory
@@ -163,7 +152,7 @@ func (fp *FrameProcessor) saveFrame(frame FrameData) ProcessResult {
 		return result
 	}
 
-	// Process frame data
+	// Process frame data with validation
 	var frameData []byte
 	if isBase64(frame.Data) {
 		decoded, err := base64.StdEncoding.DecodeString(string(frame.Data))
@@ -176,42 +165,144 @@ func (fp *FrameProcessor) saveFrame(frame FrameData) ProcessResult {
 		frameData = frame.Data
 	}
 
-	// Create the filename
+	// Validate decoded data
+	if len(frameData) == 0 {
+		result.Error = fmt.Errorf("invalid frame data after decoding")
+		return result
+	}
+
+	// Verify JPEG format
+	if _, err := jpeg.DecodeConfig(bytes.NewReader(frameData)); err != nil {
+		result.Error = fmt.Errorf("invalid JPEG format: %w", err)
+		return result
+	}
+
+	// Create filename with proper frame number
 	filename := filepath.Join(cameraDir,
 		fmt.Sprintf("frame_%05d_%s.jpg",
 			frame.Number,
 			frame.Timestamp.Format("20060102_150405.000")))
 
 	// Save the frame
-	file, err := os.Create(filename)
-	if err != nil {
-		result.Error = fmt.Errorf("failed to create file: %w", err)
-		return result
-	}
-	defer file.Close()
-
-	img, err := jpeg.Decode(bytes.NewReader(frameData))
-	if err != nil {
-		result.Error = fmt.Errorf("failed to decode JPEG: %w", err)
-		return result
-	}
-
-	if err := jpeg.Encode(file, img, &jpeg.Options{Quality: 90}); err != nil {
-		result.Error = fmt.Errorf("failed to encode JPEG: %w", err)
+	if err := os.WriteFile(filename, frameData, 0644); err != nil {
+		result.Error = fmt.Errorf("failed to write frame file: %w", err)
 		return result
 	}
 
 	result.FilePath = filename
-	processingTime := time.Since(startTime)
-	result.Duration = processingTime
-
-	fp.logger.Debug("Saved frame",
-		zap.String("camera", frame.CameraID),
-		zap.Uint64("frame", frame.Number),
-		zap.String("file", filename),
-		zap.Duration("processing_time", processingTime))
+	result.Duration = time.Since(startTime)
 
 	return result
+}
+
+// ProcessFrame with improved error handling
+func (fp *FrameProcessor) ProcessFrame(frame FrameData) error {
+	if frame.CameraID == "" || frame.Number == 0 || len(frame.Data) == 0 {
+		return fmt.Errorf("invalid frame data")
+	}
+
+	select {
+	case fp.frameChan <- frame:
+		fp.logger.Debug("Queued frame for processing",
+			zap.String("camera", frame.CameraID),
+			zap.Uint64("frame", frame.Number))
+		return nil
+	default:
+		return fmt.Errorf("frame processing queue full")
+	}
+}
+
+// consolidateFrames with better control flow
+func (fp *FrameProcessor) consolidateFrames() error {
+	fp.mu.Lock()
+	defer fp.mu.Unlock()
+
+	// Check if consolidation is enabled
+	if !fp.config.VideoConsolidation {
+		return nil
+	}
+
+	var processedCameras []string
+	fp.processingMap.Range(func(key, value interface{}) bool {
+		cameraID := key.(string)
+		cameraDir := filepath.Join(fp.config.OutputDir, cameraID)
+
+		// Get frames for this camera
+		frames, err := filepath.Glob(filepath.Join(cameraDir, "frame_*.jpg"))
+		if err != nil {
+			fp.logger.Error("Failed to glob frames",
+				zap.String("camera", cameraID),
+				zap.Error(err))
+			return true
+		}
+
+		// Skip if not enough frames
+		if len(frames) < fp.config.MaxFrames {
+			return true
+		}
+
+		// Sort frames by number
+		sort.Slice(frames, func(i, j int) bool {
+			numI := extractFrameNumber(frames[i])
+			numJ := extractFrameNumber(frames[j])
+			return numI < numJ
+		})
+
+		processedCameras = append(processedCameras, cameraID)
+
+		// Process frames in batches
+		for i := 0; i < len(frames); i += fp.config.MaxFrames {
+			end := i + fp.config.MaxFrames
+			if end > len(frames) {
+				end = len(frames)
+			}
+
+			batch := frames[i:end]
+			if err := fp.processFrameBatch(cameraID, batch); err != nil {
+				fp.logger.Error("Failed to process frame batch",
+					zap.String("camera", cameraID),
+					zap.Error(err))
+			}
+		}
+
+		return true
+	})
+
+	return nil
+}
+
+// New helper function to process frame batches
+func (fp *FrameProcessor) processFrameBatch(cameraID string, frames []string) error {
+	if len(frames) == 0 {
+		return nil
+	}
+
+	videoDir := filepath.Join(fp.config.OutputDir, "videos")
+	if err := os.MkdirAll(videoDir, 0755); err != nil {
+		return fmt.Errorf("failed to create video directory: %w", err)
+	}
+
+	videoPath := filepath.Join(videoDir,
+		fmt.Sprintf("%s_%s.mp4",
+			cameraID,
+			time.Now().Format("20060102_150405")))
+
+	if err := fp.createVideo(frames, videoPath); err != nil {
+		return fmt.Errorf("failed to create video: %w", err)
+	}
+
+	// Clean up processed frames if configured
+	if fp.config.DeleteOriginals {
+		for _, frame := range frames {
+			if err := os.Remove(frame); err != nil {
+				fp.logger.Warn("Failed to delete frame",
+					zap.String("frame", frame),
+					zap.Error(err))
+			}
+		}
+	}
+
+	return nil
 }
 
 func (fp *FrameProcessor) processFrames(ctx context.Context) {
@@ -256,98 +347,6 @@ func (fp *FrameProcessor) processFrames(ctx context.Context) {
 			}
 		}
 	}
-}
-
-// In processor.go
-
-// Update the consolidateFrames function
-func (fp *FrameProcessor) consolidateFrames() error {
-	fp.mu.Lock()
-	defer fp.mu.Unlock()
-
-	var processedCameras []string
-
-	fp.processingMap.Range(func(key, value interface{}) bool {
-		cameraID := key.(string)
-		cameraDir := filepath.Join(fp.config.OutputDir, cameraID)
-
-		frames, err := filepath.Glob(filepath.Join(cameraDir, "frame_*.jpg"))
-		if err != nil {
-			fp.logger.Error("Failed to glob frames",
-				zap.String("camera", cameraID),
-				zap.Error(err))
-			return true
-		}
-
-		if len(frames) < fp.config.MaxFrames {
-			// Not enough frames yet
-			return true
-		}
-
-		fp.logger.Info("Consolidating frames",
-			zap.String("camera", cameraID),
-			zap.Int("frame_count", len(frames)))
-
-		// Create video
-		videoDir := filepath.Join(fp.config.OutputDir, "videos")
-		if err := os.MkdirAll(videoDir, 0755); err != nil {
-			fp.logger.Error("Failed to create video directory",
-				zap.String("camera", cameraID),
-				zap.Error(err))
-			return true
-		}
-
-		videoPath := filepath.Join(videoDir,
-			fmt.Sprintf("%s_%s.mp4",
-				cameraID,
-				time.Now().Format("20060102_150405")))
-
-		if err := fp.createVideo(frames[:fp.config.MaxFrames], videoPath); err != nil {
-			fp.logger.Error("Failed to create video",
-				zap.String("camera", cameraID),
-				zap.String("video_path", videoPath),
-				zap.Error(err))
-			return true
-		}
-
-		processedCameras = append(processedCameras, cameraID)
-
-		fp.logger.Info("Video consolidation complete",
-			zap.String("camera", cameraID),
-			zap.String("video_path", videoPath),
-			zap.Int("processed_frames", len(frames[:fp.config.MaxFrames])))
-
-		// Cleanup if configured
-		if fp.config.DeleteOriginals {
-			for _, frame := range frames[:fp.config.MaxFrames] {
-				if err := os.Remove(frame); err != nil {
-					fp.logger.Warn("Failed to delete frame",
-						zap.String("camera", cameraID),
-						zap.String("frame", frame),
-						zap.Error(err))
-				}
-			}
-
-			// Keep remaining frames
-			for i, frame := range frames[fp.config.MaxFrames:] {
-				newPath := filepath.Join(cameraDir,
-					fmt.Sprintf("frame_%05d_%s.jpg",
-						i+1,
-						time.Now().Format("20060102_150405")))
-				if err := os.Rename(frame, newPath); err != nil {
-					fp.logger.Warn("Failed to rename frame",
-						zap.String("camera", cameraID),
-						zap.String("frame", frame),
-						zap.String("new_path", newPath),
-						zap.Error(err))
-				}
-			}
-		}
-
-		return true
-	})
-
-	return nil
 }
 
 func (fp *FrameProcessor) createVideo(frames []string, outputPath string) error {

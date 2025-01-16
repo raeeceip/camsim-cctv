@@ -380,34 +380,38 @@ func (m UIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (l *Logger) Close() error {
 	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	// Close channels if they're still open
 	if l.done != nil {
 		close(l.done)
-	}
-	l.mu.Unlock()
-
-	// Wait for UI to cleanup with timeout
-	cleanup := make(chan struct{})
-	go func() {
-		if l.uiProgram != nil {
-			l.uiProgram.Kill()
-		}
-		close(cleanup)
-	}()
-
-	select {
-	case <-cleanup:
-	case <-time.After(1 * time.Second):
-		// Force cleanup after timeout
+		l.done = nil
 	}
 
-	// Close log file
+	// Stop UI if running
+	if l.uiProgram != nil {
+		l.uiProgram.Kill()
+		l.uiProgram = nil
+	}
+
+	// Close file handles
 	if l.outputFile != nil {
 		if err := l.outputFile.Close(); err != nil {
 			return fmt.Errorf("failed to close log file: %w", err)
 		}
+		l.outputFile = nil
 	}
 
-	return l.Logger.Sync()
+	// Sync underlying logger
+	if l.Logger != nil {
+		if err := l.Logger.Sync(); err != nil {
+			if !strings.Contains(err.Error(), "inappropriate ioctl") {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func (m UIModel) View() string {

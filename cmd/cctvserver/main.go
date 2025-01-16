@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/raeeceip/cctv/internal/config"
 	"github.com/raeeceip/cctv/internal/server"
 	"github.com/raeeceip/cctv/pkg/logger"
@@ -26,10 +26,11 @@ func main() {
 		panic("Failed to load config: " + err.Error())
 	}
 
-	// Initialize enhanced logger
+	// Initialize enhanced logger with UI disabled initially
 	logConfig := logger.Config{
 		OutputPath: "logs/cctv.log",
-		EnableUI:   true,
+		EnableUI:   false, // Start with UI disabled
+		UseConsole: true,  // Enable console output
 	}
 
 	log, err := logger.NewLogger(cfg.LogLevel, logConfig)
@@ -37,40 +38,32 @@ func main() {
 		panic("Failed to initialize logger: " + err.Error())
 	}
 
-	// Setup signal handling early
+	// Setup signal handling
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
 
-	// Create a context that will be cancelled on signal
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	// Handle shutdown signal
+	// Cleanup handling
+	defer func() {
+		// Allow time for cleanup
+		time.Sleep(200 * time.Millisecond)
+
+		// Attempt to close logger gracefully
+		if err := log.Close(); err != nil {
+			if !os.IsNotExist(err) && !strings.Contains(err.Error(), "file already closed") {
+				fmt.Printf("Error closing logger: %v\n", err)
+			}
+		}
+	}()
+
+	// Handle shutdown signal in a separate goroutine
 	go func() {
 		sig := <-signalChan
 		log.Info("Received shutdown signal", zap.String("signal", sig.String()))
 		cancel()
 	}()
-
-	// Ensure proper cleanup
-	defer func() {
-		cancel() // Ensure context is cancelled
-		if err := log.Close(); err != nil {
-			fmt.Printf("Error closing logger: %v\n", err)
-		}
-	}()
-
-	// Start logger UI if enabled
-	if logConfig.EnableUI {
-		if err := log.StartUI(); err != nil {
-			log.Error("Failed to start logger UI", zap.Error(err))
-			os.Exit(1)
-		}
-	}
-
-	// Set Gin mode based on environment
-	if cfg.LogLevel != "debug" {
-		gin.SetMode(gin.ReleaseMode)
-	}
 
 	// Initialize and start server
 	srv, err := server.New(cfg, log)
@@ -78,36 +71,30 @@ func main() {
 		log.Fatal("Failed to initialize server", zap.Error(err))
 	}
 
-	// Start the server in a goroutine
-	serverErr := make(chan error, 1)
-	go func() {
-		if err := srv.Start(ctx); err != nil {
-			serverErr <- err
-		}
-	}()
-
-	// Wait for either server error or context cancellation
-	select {
-	case err := <-serverErr:
+	// Start server
+	if err := srv.Start(ctx); err != nil && err != context.Canceled {
 		log.Error("Server error", zap.Error(err))
-	case <-ctx.Done():
-		log.Info("Context cancelled, shutting down...")
 	}
 
-	// Perform graceful shutdown
+	// Graceful shutdown
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCancel()
 
-	// Stop the server
-	srv.Stop()
+	done := make(chan struct{})
+	go func() {
+		srv.Stop()
+		close(done)
+	}()
 
 	// Wait for shutdown to complete or timeout
 	select {
 	case <-shutdownCtx.Done():
 		log.Warn("Shutdown timed out")
-	case <-time.After(100 * time.Millisecond):
-		// Brief pause to allow final logs to be written
+	case <-done:
+		log.Info("Server shutdown completed successfully")
 	}
 
+	// Final cleanup
+	time.Sleep(100 * time.Millisecond) // Brief pause for final logs
 	log.Info("Server shutdown complete")
 }

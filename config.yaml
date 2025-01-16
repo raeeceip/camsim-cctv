@@ -3,7 +3,7 @@ log_level: "debug"
 
 server:
   host: "localhost"
-  port: 8081
+  port: 8080
   signal_port: 8081
   stream_port: 8082
   ssl:
@@ -27,3 +27,8 @@ storage:
   max_frames: 1000
   max_disk_usage: 1073741824 # 1GB
   retention_hours: 24
+  video_consolidation:
+    enabled: True # Make consolidation optional
+    interval: "10m" # Consolidation interval when enabled
+    min_frames: 300
+    delete_originals: false

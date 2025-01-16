@@ -12,6 +12,12 @@ run-server:
 run-sim:
 	./bin/camerasim -id cam1 -addr "ws://localhost:8080/camera/connect"
 
+run-both:
+	mkdir -p frames/
+	mkdir -p frames/videos/
+	./bin/cctvserver &
+	./bin/camerasim -id cam1 -addr "ws://localhost:8080/camera/connect"
+
 clean:
 	rm -rf bin/
 	rm -rf frames/

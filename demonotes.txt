@@ -1,0 +1,47 @@
+# CCTV System Demo & Architecture Overview
+
+## 1. System Architecture (2 minutes)
+- Event-driven design principles
+- Component separation
+- Scalability considerations
+- Integration capabilities
+
+## 2. Technical Highlights (2 minutes)
+- WebSocket reliability
+- Frame processing pipeline
+- Monitoring and metrics
+- Error handling and recovery
+
+## 3. Future Enhancements (1 minute)
+- ONVIF protocol support
+- Real-time analytics integration
+- Clustering capabilities
+- Event bus integration
+
+## Key Discussion Points for Q&A
+
+### Architecture Decisions
+- Why WebSocket for initial implementation?
+- Event-driven architecture benefits
+- Interface-based design choices
+
+### Technical Implementation
+- Frame processing optimization
+- Error handling strategies
+- Performance considerations
+
+### Integration Capabilities
+- Event bus integration plans
+- Third-party system compatibility
+- Scaling strategies
+
+### Development Process
+- Testing methodology
+- Deployment considerations
+- Monitoring and maintenance
+
+## Demo Highlights
+1. Show live camera connection
+2. Demonstrate frame processing
+3. Display monitoring metrics
+4. Showcase error recovery
